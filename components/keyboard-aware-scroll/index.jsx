@@ -12,7 +12,10 @@ const styles = StyleSheet.create({
 const KeyboardAwareScroll = ({ children }) => {
   return (
     <>
-      <KeyboardAwareScrollView contentContainerStyle={styles.keyboardAware}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.keyboardAware}
+        keyboardShouldPersistTaps="handled"
+      >
         {children}
       </KeyboardAwareScrollView>
     </>

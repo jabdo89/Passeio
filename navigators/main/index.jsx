@@ -4,14 +4,18 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomNavigation, BottomNavigationTab, Icon } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Send from '@screens/send';
+import Home from '@screens/home';
 import Deliver from '@screens/deliver';
+import Pay from '@screens/pay';
+import ServiceList from '@screens/services-list';
+import ServiceDetail from '@screens/services-detail';
+import Messages from '@screens/messages';
 import Profile from '@screens/profile';
 
 const { Navigator: BottomNavigator, Screen: BottomScreen } = createBottomTabNavigator();
 
 const BottomBar = ({ navigation, state }) => {
   const { bottom } = useSafeAreaInsets();
-
   return (
     <BottomNavigation
       selectedIndex={state.index}
@@ -19,20 +23,17 @@ const BottomBar = ({ navigation, state }) => {
       style={{
         paddingBottom: bottom,
         paddingTop: 20,
+        backgroundColor: 'black',
       }}
     >
+      <BottomNavigationTab title="Inicio" icon={(props) => <Icon {...props} name="home" />} />
       <BottomNavigationTab
         title="Enviar"
-        icon={(props) => <Icon {...props} name="arrowhead-up-outline" />}
+        icon={(props) => <Icon {...props} name="arrowhead-up" />}
       />
-      <BottomNavigationTab
-        title="Entregar"
-        icon={(props) => <Icon {...props} name="car-outline" />}
-      />
-      <BottomNavigationTab
-        title="Perfil"
-        icon={(props) => <Icon {...props} name="person-outline" />}
-      />
+      <BottomNavigationTab title="Entregar" icon={(props) => <Icon {...props} name="car" />} />
+      <BottomNavigationTab title="Pedidos" icon={(props) => <Icon {...props} name="calendar" />} />
+      <BottomNavigationTab title="Perfil" icon={(props) => <Icon {...props} name="person" />} />
     </BottomNavigation>
   );
 };
@@ -40,9 +41,14 @@ const BottomBar = ({ navigation, state }) => {
 const Main = () => {
   return (
     <BottomNavigator tabBar={(props) => <BottomBar {...props} />}>
+      <BottomScreen name="Home" component={Home} />
       <BottomScreen name="Send" component={Send} />
       <BottomScreen name="Deliver" component={Deliver} />
+      <BottomScreen name="ServiceList" component={ServiceList} />
       <BottomScreen name="Profile" component={Profile} />
+      <BottomScreen name="ServiceDetail" component={ServiceDetail} />
+      <BottomScreen name="Pay" component={Pay} />
+      <BottomScreen name="Messages" component={Messages} />
     </BottomNavigator>
   );
 };

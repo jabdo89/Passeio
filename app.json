@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Avviare",
-    "slug": "Avviare",
+    "name": "Passeio",
+    "slug": "Passeio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/iconPasseio.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/splashPasseio.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,7 +21,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.jabdo89.Passeio"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -1,11 +1,14 @@
 const theme = {
+  animation: {
+    scale: 1.0,
+  },
   light: {
     'color-primary-100': '#E3DEFD',
     'color-primary-200': '#C7BEFC',
     'color-primary-300': '#A89BF6',
     'color-primary-400': '#8D7FED',
-    'color-primary-500': '#6757E2',
-    'color-primary-600': '#4D3FC2',
+    'color-primary-500': '#2d3436',
+    'color-primary-600': '#EFC532',
     'color-primary-700': '#362BA2',
     'color-primary-800': '#231B83',
     'color-primary-900': '#16106C',
