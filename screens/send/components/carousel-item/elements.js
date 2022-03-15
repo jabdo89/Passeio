@@ -8,7 +8,7 @@ const Card = styled(DefaultCard)`
 `;
 
 const Tag = styled(Layout)`
-  background-color: ${(props) => props.theme[`color-${props.color}-600`]};
+  background-color: red;
   border-radius: 9999999px;
   padding: 5px 10px;
   margin-top: 5px;

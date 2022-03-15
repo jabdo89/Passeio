@@ -39,10 +39,10 @@ const TakePhotoModal = ({
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState(null);
   const [profile, setProfile] = useState(null);
+  const user = firebase.auth().currentUser;
 
   useEffect(() => {
     const query = async () => {
-      const user = firebase.auth().currentUser;
       setProfile(user);
       setMessages(null);
       const messagesRef = firebase.database().ref(`/messages/${chat.id}`).limitToLast(100);
@@ -66,24 +66,26 @@ const TakePhotoModal = ({
         }
       });
     };
-    console.log('howdy');
     query();
   }, chat);
 
   const submit = async () => {
-    console.log('hey');
+    const db = firebase.firestore();
+
     firebase.database().ref(`messages/${chat.id}`).push({
       id: uuid.v4(),
       message,
       timestamp: new Date().getTime(),
       sender: profile.uid,
     });
+
+    db.collection('Services')
+      .doc(chat.id)
+      .update({ lastMessage: message, lastMessageDate: new Date().getTime() });
     setMessage('');
   };
 
   const SendIcon = (props) => <Icon {...props} name="navigation-2" />;
-
-  console.log(loadingChat);
 
   const close = async () => {
     setMessages(null);
@@ -103,8 +105,6 @@ const TakePhotoModal = ({
         seenAt={item.message}
         isYours={profile.uid === item.sender}
       />
-      {console.log(profile.uid)}
-      {console.log(item.sender)}
     </>
   );
 
@@ -141,7 +141,7 @@ const TakePhotoModal = ({
         >
           <TopNavigation
             alignment="left"
-            title="Jorge Abdo"
+            title={chat ? (chat.userID === user.uid ? chat.driverName : chat.senderName) : ''}
             accessoryLeft={() => (
               <TopNavigationAction
                 onPress={close}

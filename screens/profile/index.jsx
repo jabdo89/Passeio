@@ -1,18 +1,43 @@
 import React, { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import firebase from 'firebase';
+import { Rating } from 'react-native-ratings';
 import { useAuth } from '@providers/auth';
 import { StatusBar } from 'expo-status-bar';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Alert } from 'react-native';
 import { Avatar, Text, Divider, Icon, Button, Card, Modal, useTheme } from '@ui-kitten/components';
 import { Container, Content, Row, OptionText, AvatarSection, TextSection } from './elements';
 
 const Options = () => {
   const { top } = useSafeAreaInsets();
   const [exitModal, toggleExitModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [withdraw, setWithdraw] = useState(false);
   const theme = useTheme();
 
   const { user } = useAuth();
+
+  const retirar = async () => {
+    setSubmitting(true);
+    const db = firebase.firestore();
+    db.collection('Withdraws')
+      .add({
+        driverID: user.uid,
+        quantity: user.credit,
+        date: new Date(),
+      })
+      .then(() => {
+        setSubmitting(false);
+        setWithdraw(true);
+        db.collection('Users').doc(user.uid).update({
+          retirando: true,
+        });
+        Alert.alert(
+          'Contacte a Soporte',
+          'Soporte se encargara de mandarle su dinero de la forma mas comoda para usted'
+        );
+      });
+  };
 
   return (
     <>
@@ -33,13 +58,36 @@ const Options = () => {
             </Text>
           </TextSection>
         </AvatarSection>
+        <Rating
+          type="star"
+          ratingCount={5}
+          startingValue={user.rating ? user.rating : 5}
+          imageSize={50}
+          showRating
+        />
+        <Card
+          style={{
+            marginTop: 15,
+            marginRight: 'auto',
+            marginLeft: 'auto',
+            width: '80%',
+          }}
+          status="primary"
+        >
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 32, fontWeight: '800' }}>${user.credit.toFixed(2)}</Text>
+            <Button disabled={user.retirando || withdraw} onPress={() => retirar()}>
+              Retirar
+            </Button>
+          </Row>
+        </Card>
         <Content>
           <TouchableOpacity onPress={() => toggleExitModal(true)}>
-            <Row>
-              <OptionText>Salir</OptionText>
+            <Row style={{ marginTop: 40 }}>
+              <OptionText>Cerrar Sesión</OptionText>
               <Icon
-                height={22}
-                width={22}
+                height={32}
+                width={32}
                 fill={theme['color-danger-600']}
                 name="log-out-outline"
               />

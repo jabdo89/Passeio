@@ -17,6 +17,8 @@ const Row = styled(Layout)`
 
 const OptionText = styled(Text)`
   margin-right: auto;
+  font-weight: bold;
+  font-size: 18;
 `;
 
 const AvatarSection = styled.View`

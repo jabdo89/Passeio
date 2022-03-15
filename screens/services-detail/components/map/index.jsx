@@ -31,11 +31,12 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
 
   useEffect(() => {
     // Only autocenter first time
-    if (mapReady && !firstCenterDone) {
+    if (mapReady) {
       center();
       setFirstCenterDone(false);
     }
-  }, [mapReady, currentCoordinate, selected]);
+  }, [mapReady, currentCoordinate, form]);
+
   return (
     <BackgroundMap onMapReady={() => setMapReady(true)} ref={ref} provider={PROVIDER_GOOGLE}>
       {currentCoordinate && (

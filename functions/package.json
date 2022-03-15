@@ -13,8 +13,10 @@
   },
   "main": "index.js",
   "dependencies": {
+    "axios": "^0.24.0",
     "firebase-admin": "^8.10.0",
     "firebase-functions": "^3.6.1",
+    "stripe": "^8.195.0",
     "unofficial-amazon-search": "^2.0.7"
   },
   "devDependencies": {

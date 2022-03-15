@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
+import ExpoFastImage from 'expo-fast-image';
 import {
   Icon,
   Layout,
@@ -18,7 +19,7 @@ const Header = () => {
   const theme = useTheme();
 
   const EditIcon = (props) => (
-    <Icon {...props} name="calendar" onPress={() => navigate('Messages')} />
+    <Icon {...props} fill="#FFD700" name="inbox" onPress={() => navigate('Messages')} />
   );
 
   const renderRightActions = () => (
@@ -28,9 +29,10 @@ const Header = () => {
   );
 
   const renderBackAction = () => (
-    <Image
-      style={{ width: 100, height: 25, marginLeft: 10, resizeMode: 'contain' }}
+    <ExpoFastImage
       source={require('../../images/home_logo.png')}
+      cacheKey={'Logo'}
+      style={{ width: 100, height: 25, marginLeft: 10, resizeMode: 'contain' }}
     />
   );
 

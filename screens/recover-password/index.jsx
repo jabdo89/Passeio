@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { emailPattern } from '@config/constants';
+import { auth } from '@config/firebase';
 import KeyboardAwareScroll from '@components/keyboard-aware-scroll';
 import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
@@ -19,12 +20,17 @@ const RecoverPassword = () => {
     setIsEmailError(!emailPattern.test(email));
   }, [email]);
 
-  const submit = () => {
+  const submit = async () => {
     if (isEmailError) {
       setSubmittedTry(true);
       return;
     }
 
+    try {
+      await auth().sendPasswordResetEmail(email);
+    } catch (err) {
+      Alert.alert('Correo no tiene cuenta de Passeio');
+    }
     // TODO: Send recover email
 
     Alert.alert('Correo de recuperación enviado');

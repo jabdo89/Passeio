@@ -11,6 +11,7 @@ import ServiceList from '@screens/services-list';
 import ServiceDetail from '@screens/services-detail';
 import Messages from '@screens/messages';
 import Profile from '@screens/profile';
+import History from '@screens/services-history';
 
 const { Navigator: BottomNavigator, Screen: BottomScreen } = createBottomTabNavigator();
 
@@ -18,6 +19,7 @@ const BottomBar = ({ navigation, state }) => {
   const { bottom } = useSafeAreaInsets();
   return (
     <BottomNavigation
+      indicatorStyle={{ backgroundColor: '#FFD700', height: 4 }}
       selectedIndex={state.index}
       onSelect={(index) => navigation.navigate(state.routeNames[index])}
       style={{
@@ -26,7 +28,12 @@ const BottomBar = ({ navigation, state }) => {
         backgroundColor: 'black',
       }}
     >
-      <BottomNavigationTab title="Inicio" icon={(props) => <Icon {...props} name="home" />} />
+      <BottomNavigationTab
+        title="Inicio"
+        icon={(props) => {
+          return <Icon {...props} name="home" />;
+        }}
+      />
       <BottomNavigationTab
         title="Enviar"
         icon={(props) => <Icon {...props} name="arrowhead-up" />}
@@ -49,6 +56,7 @@ const Main = () => {
       <BottomScreen name="ServiceDetail" component={ServiceDetail} />
       <BottomScreen name="Pay" component={Pay} />
       <BottomScreen name="Messages" component={Messages} />
+      <BottomScreen name="History" component={History} />
     </BottomNavigator>
   );
 };

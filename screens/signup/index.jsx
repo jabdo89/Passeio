@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '@config/firebase';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { emailPattern } from '@config/constants';
 import KeyboardAwareScroll from '@components/keyboard-aware-scroll';
@@ -51,16 +51,30 @@ const Signup = () => {
     delete newUser.confirmPassword;
 
     const snapshot = await db().collection('Users').where('email', '==', newUser.email).get();
-
+    let user = null;
     if (snapshot.empty) {
-      const { user } = await auth().createUserWithEmailAndPassword(newUser.email, newUser.password);
+      try {
+        const { user: data } = await auth().createUserWithEmailAndPassword(
+          newUser.email,
+          newUser.password
+        );
+        user = data;
+      } catch (err) {
+        // setLoginError(err.message);
+        Alert.alert(err.message);
+        setSubmitting(false);
+      }
 
       db().collection('Users').doc(user.uid).set({
         email: newUser.email,
         uid: user.uid,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
+        credit: 0,
+        rating: 5,
       });
+    } else {
+      Alert.alert('Usuario ya existe');
     }
   };
 

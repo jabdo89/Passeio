@@ -18,7 +18,7 @@ const MarkerText = styled(Text)`
 `;
 
 const BackgroundMap = styled(MapView)`
-  height: 290px;
+  height: 60%;
   left: 0;
   right: 0;
   top: 0;

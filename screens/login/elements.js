@@ -4,6 +4,7 @@ import { Layout, Text, Input as DefaultInput, Button } from '@ui-kitten/componen
 const Content = styled(Layout)`
   flex-grow: 1;
   padding: 20px;
+  background: transparent;
 `;
 
 const Header = styled(Layout)`
@@ -18,16 +19,21 @@ const Header = styled(Layout)`
 const Title = styled(Text)`
   color: ${(props) => props.theme['color-primary-100']};
   text-align: center;
+  font-size: 55px;
 `;
 
 const Subtitle = styled(Text)`
   color: ${(props) => props.theme['color-primary-100']};
   font-weight: 300;
   text-align: center;
+  font-size: 25px;
 `;
 
 const Input = styled(DefaultInput)`
-  margin: 5px 0;
+  margin: 9px 0;
+  width: 85%;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const SigninButton = styled(Button)`

@@ -36,17 +36,29 @@ const Status = styled(Text)`
   font-size: 14;
 `;
 const ActionButton = styled(Button)`
-  margin-left: 60px;
+  margin-left: 7%;
+  position: absolute;
+  top: 90%;
   margin-right: 60px;
+  border-radius: 999999px;
+  margin-top: 20px;
+`;
+
+const ActionButton2 = styled(Button)`
+  position: absolute;
+  margin-right: 10%;
+  top: 90%;
+  left: 52%;
+  margin-right: 60px;
+  border-radius: 999999px;
   margin-top: 20px;
 `;
 
 const FloatingButton = styled(Button)`
   position: absolute;
   right: 20px;
-  bottom: 210px;
+  bottom: 55%;
   border-radius: 999999px;
   height: 55px;
-  width: 55px;
 `;
-export { Container, Tag, Title, Row, Status, ActionButton, FloatingButton };
+export { Container, Tag, Title, Row, Status, ActionButton, ActionButton2, FloatingButton };

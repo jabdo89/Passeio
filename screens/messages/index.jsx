@@ -30,7 +30,7 @@ const Messages = () => {
   const [modal, setModal] = useState(false);
   const [selected, setSelected] = useState(null);
   const [loadingChat, setLoadingChat] = useState(false);
-
+  const user = firebase.auth().currentUser;
   const SendIcon = (props) => <Icon {...props} name="navigation-2" />;
 
   const select = (item) => {
@@ -41,13 +41,12 @@ const Messages = () => {
   useEffect(() => {
     const query = () => {
       const db = firebase.firestore();
-      const user = firebase.auth().currentUser;
       setProfile(user);
       db.collection('Services').onSnapshot((querySnapshot) => {
         const envios = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.userID === user.uid || data.driverID === user.uid) {
+          if ((data.userID === user.uid || data.driverID === user.uid) && data.payed) {
             envios.push(doc.data());
           }
         });
@@ -58,16 +57,19 @@ const Messages = () => {
     query();
   }, []);
 
-  const envio = (props) => <Text> Envio</Text>;
-  const entrega = (props) => <Text> Entrega</Text>;
-
   const renderItem = ({ item, index }) => (
     <ListItem
       onPress={() => select(item)}
       style={{ minHeight: 100 }}
-      title={`Servicio:  ${item.id.substring(0, 7)}`}
-      description={`${item.description} ${index + 1}`}
-      accessoryRight={item.userID === profile.uid ? envio : entrega}
+      title={item.userID === user.uid ? item.driverName : item.senderName}
+      description={item.lastMessage}
+      accessoryRight={() => (
+        <Text>
+          {moment(item.lastMessageDate).format('ll') === 'Invalid date'
+            ? null
+            : moment(item.lastMessageDate).format('ll')}
+        </Text>
+      )}
     />
   );
 

@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, Alert } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import KeyboardAwareScroll from '@components/keyboard-aware-scroll';
 import firebase from 'firebase';
-import CreditCard from 'react-native-credit-card-v2';
 import { useNavigation } from '@react-navigation/native';
 import shortid from 'shortid';
+import { useAuth } from '@providers/auth';
 import 'firebase/functions';
-import TakePhotoModal from '../../templates/take-photo-modal';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import {
   Icon,
@@ -18,12 +17,15 @@ import {
   TabBar,
   Divider,
   List,
-  Avatar,
+  Select,
+  SelectItem,
   Card,
-  useTheme,
+  IndexPath,
 } from '@ui-kitten/components';
 import Carousel from 'react-native-snap-carousel';
-import Header from './components/header';
+import Modal from './components/modal';
+import ModalDestination from './components/modal-destination';
+import TakePhotoModal from '../../templates/take-photo-modal';
 import CarouselItem from './components/carousel-item';
 import {
   Container,
@@ -39,9 +41,28 @@ import {
   Subtitle,
 } from './elements';
 
-const Send = () => {
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  let R = 6371; // Radius of the earth in km
+  let dLat = deg2rad(lat2 - lat1); // deg2rad below
+  let dLon = deg2rad(lon2 - lon1);
+  let a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+const Send = ({ route }) => {
+  const params = route.params;
+
   const ref = useRef();
-  const theme = useTheme();
+  const { top } = useSafeAreaInsets();
+  const { user } = useAuth();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [form, setForm] = useState({
     startPoint: '',
@@ -53,19 +74,14 @@ const Send = () => {
     image: '',
     date: new Date(),
   });
-  const [creditCard, setCreditCard] = useState({
-    number: '',
-    cvc: '',
-    expiry: '',
-    type: '',
-    name: '',
-  });
 
   const [amazon, setAmazon] = useState({
     search: '',
+    url: '',
   });
 
   const [amazonResult, setAmazonResult] = useState(null);
+  const [amazonProduct, setAmazonProduct] = useState(null);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cart, setCart] = useState([]);
@@ -79,14 +95,37 @@ const Send = () => {
   const [isValueError, setIsValueError] = useState(true);
   const [isWeightError, setIsWeightError] = useState(true);
   const [isQuantityError, setIsQuantityError] = useState(true);
+  const [isImageError, setIsImageError] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
 
   const [isTakePhotoModalOpen, toggleTakePhotoModal] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  const [precio, setPrecio] = useState({ precio: '', impuestos: '', total: '' });
+
+  const [isModalOpen, toggleModal] = useState(false);
+  const [isModalDestinationOpen, toggleModalDestination] = useState(false);
+  //Params
   useEffect(() => {
-    setIsAddressError(form.destination.country !== form.startPoint.country);
+    if (params) {
+      setPage(params.page);
+      setSelectedIndex(params.type);
+      if (params.search) {
+        setAmazon({ url: '', search: params.search });
+      }
+      if (params.url) {
+        setAmazon({ url: params.url, search: '' });
+      }
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (form.destination !== '' && form.startPoint !== '') {
+      setIsAddressError(form.destination.country !== form.startPoint.country);
+    } else {
+      setIsAddressError(false);
+    }
   }, [form.destination, form.startPoint]);
 
   useEffect(() => {
@@ -98,6 +137,10 @@ const Send = () => {
   }, [form.weight]);
 
   useEffect(() => {
+    setIsImageError(!form.image);
+  }, [form.image]);
+
+  useEffect(() => {
     setIsQuantityError(form.quantity <= 0);
   }, [form.quantity]);
 
@@ -106,6 +149,21 @@ const Send = () => {
       setSubmittedTry(true);
       return;
     }
+    const precio2 =
+      parseFloat(form.value) * 0.05 +
+      parseFloat(form.weight) * 1.5 +
+      getDistanceFromLatLonInKm(
+        form.startPoint.location.lat,
+        form.startPoint.location.lng,
+        form.destination.location.lat,
+        form.destination.location.lng
+      ) *
+        0.015;
+    setPrecio({
+      precio: precio2.toFixed(2),
+      impuesto: (precio2 * 0.085).toFixed(2),
+      total: (precio2 * 1.085).toFixed(2),
+    });
     setPage(1);
   };
 
@@ -136,15 +194,19 @@ const Send = () => {
   const submit = async () => {
     setSubmitting(true);
     const db = firebase.firestore();
-    const user = firebase.auth().currentUser;
     db.collection('Services')
       .add({
         ...form,
         dateCreated: new Date(),
-        status: 'posted',
+        status: 'Buscando Chofer',
         userID: user.uid,
+        payed: false,
+        total: precio,
         driverID: '',
+        senderName: `${user.firstName} ${user.lastName}`,
         type: 'Local',
+        lastMessage: '',
+        lastMessageDate: null,
       })
       .then(async (docRef) => {
         db.collection('Services').doc(docRef.id).update({ id: docRef.id });
@@ -176,10 +238,23 @@ const Send = () => {
         setAmazonResult(response.data);
       });
   };
+  const amazonURL = async () => {
+    const functions = firebase.functions();
+    setPage(5);
+    functions
+      .httpsCallable('urlProducts')(amazon.url)
+      .then((response) => {
+        setAmazonProduct(response.data);
+      })
+      .catch((error) => {
+        setAmazonProduct('error');
+      });
+  };
 
   const backAmazon = async () => {
     setPage(3);
     setAmazonResult(null);
+    setAmazonProduct(null);
   };
 
   const [amazonDestination, setAmazonDestination] = useState('');
@@ -187,21 +262,34 @@ const Send = () => {
   const submitAmazon = async () => {
     setSubmitting(true);
     const db = firebase.firestore();
-    const user = firebase.auth().currentUser;
     db.collection('Services')
       .add({
         destination: amazonDestination,
         dateCreated: new Date(),
         status: 'Buscando Chofer',
         type: 'Amazon',
-        total: 60.0,
+        total: {
+          products: parseFloat(getTotalAmazonPrice()),
+          fee: parseFloat(getFee()),
+          delivery: parseFloat(getTotalAmazonDelivery()),
+          total: getTotalAmazon(),
+        },
         payed: false,
+        senderName: `${user.firstName} ${user.lastName}`,
         products: cart,
         userID: user.uid,
         driverID: '',
+        lastMessage: '',
+        lastMessageDate: null,
       })
       .then(async (docRef) => {
         db.collection('Services').doc(docRef.id).update({ id: docRef.id });
+        setPage(3);
+        setSelectedProduct(null);
+        setAmazonResult(null);
+        setAmazonDestination('');
+        setAmazonProduct(null);
+        setCart([]);
         setSubmitting(false);
         Alert.alert('Pedido Confirmado', 'Buscando Chofer', [
           { text: 'OK', onPress: () => navigate('ServiceList') },
@@ -245,18 +333,155 @@ const Send = () => {
     temp.push(data);
     setCart(temp);
   };
+
+  const removeFromCart = (index) => {
+    const temp = cart;
+    temp.splice(index, 1);
+    setCart(temp);
+  };
+
+  const addToCartURL = (data) => {
+    setSelectedProduct({
+      imageUrl: data.product.images[0].link,
+      prices: [
+        {
+          price: data.product.buybox_winner.price
+            ? data.product.buybox_winner.price.value
+            : 'undefined',
+        },
+      ],
+      productUrl: data.product.link,
+      title: data.product.title,
+    });
+    const temp = cart;
+    temp.push({
+      imageUrl: data.product.images[0].link,
+      prices: [
+        {
+          price: data.product.buybox_winner.price
+            ? data.product.buybox_winner.price.value
+            : undefined,
+        },
+      ],
+      productUrl: data.product.link,
+      title: data.product.title,
+    });
+    setCart(temp);
+  };
+
+  const [manulProduct, setManulProduct] = useState({
+    imageUrl: '',
+    prices: [],
+    productUrl: '',
+    title: '',
+    peso: '',
+  });
+
+  const categories = [
+    { name: 'Otro', value: 0 },
+    { name: 'Smartwatch', value: 35.0 },
+    { name: 'Celular', value: 50.0 },
+    { name: 'Laptop', value: 55.0 },
+    { name: 'Consola de VideoJuegos', value: 60.0 },
+    { name: 'Tablet', value: 50.0 },
+    { name: 'Camara', value: 40.0 },
+    { name: 'Audifonos', value: 25.0 },
+  ];
+  const [categoriesIndex, setCategoriesIndex] = useState(new IndexPath(0));
+
+  const addToCartManual = () => {
+    setSelectedProduct({
+      imageUrl: manulProduct.imageUrl,
+      prices: [{ price: manulProduct.price }],
+      productUrl: manulProduct.productUrl,
+      title: manulProduct.title,
+      weigth: manulProduct.peso,
+      category: categories[categoriesIndex.row],
+    });
+    const temp = cart;
+    temp.push({
+      imageUrl: manulProduct.imageUrl,
+      prices: [{ price: manulProduct.price }],
+      productUrl: manulProduct.productUrl,
+      title: manulProduct.title,
+      weigth: manulProduct.peso,
+      category: categories[categoriesIndex.row],
+    });
+    setAmazonProduct(null);
+    setCart(temp);
+  };
+  const cancelOrder = () => {
+    setSelectedProduct(null);
+    setCart([]);
+  };
+
+  const addAnotherProduct = () => {
+    setSelectedProduct(null);
+    setAmazonResult(null);
+    setAmazonDestination('');
+    setAmazonProduct(null);
+    setPage(3);
+  };
+
+  const [modalItem, setModalItem] = useState({ index: null, item: null });
+
+  const handelModal = (index) => {
+    setModalItem({ index, item: cart[index] });
+    toggleModal(true);
+  };
+
+  const getTotalAmazonPrice = () => {
+    let num = 0;
+    for (let i = 0; i < cart.length; i++) {
+      if (!cart[i].prices[0]) {
+        num = 'Pendiente';
+        i = cart.length;
+        return num;
+      }
+      num += parseFloat(cart[i].prices[0].price);
+    }
+    return num.toFixed(2);
+  };
+  const getTotalAmazonDelivery = () => {
+    let num = 0;
+    for (let i = 0; i < cart.length; i++) {
+      if (!cart[i].category || !cart[i].weigth) {
+        num = 'Pendiente';
+        return num;
+      }
+      if (cart[i].category.name === 'Otro') {
+        num += cart[i].weigth * 6.5 * 1.15;
+      } else {
+        num += cart[i].category.value;
+      }
+    }
+    return num.toFixed(2);
+  };
+
+  const getFee = () => {
+    let num = getTotalAmazonPrice();
+    num *= 0.036;
+    return num.toFixed(2);
+  };
+
+  const getTotalAmazon = () => {
+    const num =
+      parseFloat(getTotalAmazonPrice()) +
+      parseFloat(getTotalAmazonDelivery()) +
+      parseFloat(getFee());
+
+    return num.toFixed(2);
+  };
+
   return (
     <>
-      <StatusBar style="auto" />
-      <Header />
-      <Divider />
       <TabBar
-        style={{ paddingTop: 20 }}
+        style={{ paddingTop: top }}
         selectedIndex={selectedIndex}
         onSelect={(index) => SetTab(index)}
       >
         <Tab title="Local" icon={CubeIcon} />
-        <Tab title="Amazon" icon={GlobeIcon} />
+        <Tab title="Internacional" icon={GlobeIcon} />
       </TabBar>
       <KeyboardAwareScroll>
         <Container>
@@ -364,7 +589,7 @@ const Send = () => {
                     size="large"
                     autoCapitalize="none"
                     value={form.value}
-                    label="Valor"
+                    label="Valor ($USD)"
                     keyboardType="numeric"
                     placeholder="Cual es el precio del producto?"
                     caption={submittedTry && isValueError && 'Ingresa un valor valido'}
@@ -383,7 +608,7 @@ const Send = () => {
                       autoCapitalize="none"
                       value={form.weight}
                       keyboardType="numeric"
-                      label="Peso"
+                      label="Peso (Libras)"
                       placeholder="Cual es el peso del paquete?"
                       caption={submittedTry && isWeightError && 'Ingresa un Peso valido'}
                       captionIcon={(props) =>
@@ -449,9 +674,10 @@ const Send = () => {
 
               {page === 1 ? (
                 <Content>
-                  <Question> When do you want your package by? </Question>
                   <Datepicker
+                    label="Que Fecha quieres que llegue tu paquete?"
                     date={form.date}
+                    filter={(date) => new Date() < date}
                     onSelect={(nextDate) => setForm({ ...form, date: nextDate })}
                   />
                   <Row>
@@ -488,8 +714,24 @@ const Send = () => {
                     onPhotoTaken={savePhoto}
                     animationType="slide"
                   />
-                  <Question> Estimated Price: </Question>
-                  <Price> $18.00 </Price>
+                  <View
+                    style={{
+                      width: 350,
+                      heigth: 400,
+                      marginTop: 25,
+                      borderRadius: 20,
+                      borderColor: 'black',
+                      borderWidth: 0.5,
+                      padding: 20,
+                    }}
+                  >
+                    <Text> Costo de Envio: ${precio.precio} </Text>
+                    {/* <Text style={{ marginBottom: 10 }}> Impuestos: ${precio.impuesto}</Text> */}
+                    <Divider />
+                    <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                      Total: ${precio.precio}
+                    </Text>
+                  </View>
                   <SigninButton
                     accessoryLeft={
                       submitting
@@ -500,125 +742,21 @@ const Send = () => {
                           )
                         : undefined
                     }
-                    disabled={submitting}
+                    disabled={submitting || isImageError}
                     onPress={submit}
                   >
-                    Confirmar Entrega
+                    Confirmar Envío
                   </SigninButton>
                   <Button appearance="ghost" onPress={() => back()}>
-                    Atras, cambair informacion
+                    Atras, cambiar informacion
                   </Button>
-                </Content>
-              ) : null}
-
-              {page === 2 ? (
-                <Content>
-                  <CreditCard
-                    type={creditCard.type}
-                    imageFront={require('./components/images/card-front.png')}
-                    imageBack={require('./components/images/card-back.png')}
-                    shiny={false}
-                    bar={false}
-                    focused="number"
-                    number={creditCard.number}
-                    name={creditCard.name}
-                    expiry={creditCard.expiry}
-                    cvc={creditCard.cvc}
-                  />
-                  <Input
-                    size="large"
-                    autoCapitalize="none"
-                    value={creditCard.name}
-                    label="Nombre"
-                    placeholder="Cual es el nombre en la tarjeta?"
-                    caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-                    captionIcon={(props) =>
-                      submittedTry &&
-                      isEmailError && <Icon {...props} name="alert-circle-outline" />
-                    }
-                    status={submittedTry && isEmailError && 'warning'}
-                    accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
-                    onChangeText={(nextValue) => setCreditCard({ ...creditCard, name: nextValue })}
-                  />
-                  <Row>
-                    <Input
-                      style={{ width: 160 }}
-                      size="large"
-                      autoCapitalize="none"
-                      value={creditCard.cvc}
-                      label="CVC"
-                      placeholder="Cual es el codigo de seguridad?"
-                      caption={
-                        submittedTry && isEmailError && 'Ingresa un correo electrónico válido'
-                      }
-                      captionIcon={(props) =>
-                        submittedTry &&
-                        isEmailError && <Icon {...props} name="alert-circle-outline" />
-                      }
-                      status={submittedTry && isEmailError && 'warning'}
-                      accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
-                      onChangeText={(nextValue) => setCreditCard({ ...creditCard, cvc: nextValue })}
-                    />
-                    <Input
-                      style={{ width: 160 }}
-                      size="large"
-                      autoCapitalize="none"
-                      value={creditCard.expiry}
-                      label="Expiry Date"
-                      placeholder="Cual es el fecha de caducidad"
-                      caption={
-                        submittedTry && isEmailError && 'Ingresa un correo electrónico válido'
-                      }
-                      captionIcon={(props) =>
-                        submittedTry &&
-                        isEmailError && <Icon {...props} name="alert-circle-outline" />
-                      }
-                      status={submittedTry && isEmailError && 'warning'}
-                      accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
-                      onChangeText={(nextValue) =>
-                        setCreditCard({ ...creditCard, expiry: nextValue })
-                      }
-                    />
-                  </Row>
-                  <Input
-                    size="large"
-                    autoCapitalize="none"
-                    value={creditCard.number}
-                    label="Numero "
-                    placeholder="Cual es el numero de la tarjeta?"
-                    caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-                    captionIcon={(props) =>
-                      submittedTry &&
-                      isEmailError && <Icon {...props} name="alert-circle-outline" />
-                    }
-                    status={submittedTry && isEmailError && 'warning'}
-                    accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
-                    onChangeText={(nextValue) =>
-                      setCreditCard({ ...creditCard, number: nextValue })
-                    }
-                  />
-                  <SigninButton
-                    accessoryLeft={
-                      submitting
-                        ? (props) => (
-                            <View {...props}>
-                              <Spinner size="small" />
-                            </View>
-                          )
-                        : undefined
-                    }
-                    disabled={submitting}
-                    onPress={next}
-                  >
-                    Routes Dashboard
-                  </SigninButton>
                 </Content>
               ) : null}
             </>
           ) : (
             <>
               {page === 3 ? (
-                <>
+                <Container>
                   <Input
                     size="large"
                     autoCapitalize="none"
@@ -635,6 +773,7 @@ const Send = () => {
                     onChangeText={(nextValue) => setAmazon({ ...amazon, search: nextValue })}
                   />
                   <SigninButton
+                    style={{ marginBottom: 40 }}
                     accessoryLeft={
                       submitting
                         ? (props) => (
@@ -647,9 +786,39 @@ const Send = () => {
                     disabled={submitting}
                     onPress={amazonSearch}
                   >
-                    Search
+                    Buscar por Nombre
                   </SigninButton>
-                </>
+                  <Input
+                    size="large"
+                    autoCapitalize="none"
+                    value={amazon.url}
+                    label="Buscar URL"
+                    placeholder="Cual es el url del Producto?"
+                    caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
+                    captionIcon={(props) =>
+                      submittedTry &&
+                      isEmailError && <Icon {...props} name="alert-circle-outline" />
+                    }
+                    status={submittedTry && isEmailError && 'warning'}
+                    accessoryLeft={(props) => <Icon {...props} name="link-2-outline" />}
+                    onChangeText={(nextValue) => setAmazon({ ...amazon, url: nextValue })}
+                  />
+                  <SigninButton
+                    accessoryLeft={
+                      submitting
+                        ? (props) => (
+                            <View {...props}>
+                              <Spinner size="small" />
+                            </View>
+                          )
+                        : undefined
+                    }
+                    disabled={submitting}
+                    onPress={amazonURL}
+                  >
+                    Buscar URL
+                  </SigninButton>
+                </Container>
               ) : null}
               {page === 4 ? (
                 <>
@@ -688,7 +857,7 @@ const Send = () => {
                                   size="medium"
                                   onPress={() => addToCart(item)}
                                 >
-                                  BUY
+                                  Agregar
                                 </Button>
                               </Row>
                             )}
@@ -714,27 +883,25 @@ const Send = () => {
                           </Card>
                         )}
                       />
-                      <SigninButton
-                        accessoryLeft={
-                          submitting
-                            ? (props) => (
-                                <View {...props}>
-                                  <Spinner size="small" />
-                                </View>
-                              )
-                            : undefined
-                        }
-                        disabled={submitting}
-                        onPress={backAmazon}
-                      >
-                        Buscar otro Producto
-                      </SigninButton>
+
+                      <SigninButton onPress={backAmazon}>Buscar otro Producto</SigninButton>
                     </>
                   ) : (
                     <>
                       {selectedProduct === null ? (
-                        <View style={{ flexDirection: 'column' }}>
-                          <Spinner style={{ alignSelf: 'center' }} size="giant" />
+                        <View style={{ top: 200 }}>
+                          <View
+                            style={{
+                              marginLeft: 'auto',
+                              marginRight: 'auto',
+                              marginBottom: 20,
+                            }}
+                          >
+                            <Spinner size="giant" />
+                          </View>
+                          <Text style={{ fontSize: 15, textAlign: 'center' }}>
+                            Bucando productos en Amazon!
+                          </Text>
                         </View>
                       ) : null}
                     </>
@@ -745,7 +912,7 @@ const Send = () => {
                         <Carousel
                           data={cart}
                           renderItem={(props) => (
-                            <CarouselItem key={shortid.generate()} {...props} />
+                            <CarouselItem key={shortid.generate()} {...props} modal={handelModal} />
                           )}
                           sliderWidth={480}
                           itemWidth={200}
@@ -755,68 +922,38 @@ const Send = () => {
 
                           // onSnapToItem={setSelected}
                         />
-                        <Button style={{ width: 150 }} onPress={() => setSelectedProduct(null)}>
+                        <Button style={{ width: 150 }} onPress={addAnotherProduct}>
                           <Text style={{ fontSize: 9 }}>Agregar Producto</Text>
                         </Button>
                       </View>
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          marginBottom: 4,
-                          marginTop: 10,
-                          fontWeight: 'bold',
-                          color: '#8f9bb3',
-                        }}
-                      >
-                        Pais de Destino
+                      <Text style={{ color: 'red', marginTop: 20 }}>
+                        {getTotalAmazonPrice() === 'Pendiente' ||
+                        getTotalAmazonDelivery() === 'Pendiente'
+                          ? 'Tienes minimo 1 producto que le falta informacion dale click para llenarla'
+                          : null}
                       </Text>
-                      <GooglePlacesAutocomplete
-                        ref={ref}
-                        placeholder="Buscar dirrecion..."
-                        listViewDisplayed={false}
-                        fetchDetails
-                        styles={{
-                          textInput: {
-                            backgroundColor: '#f7f9fc',
-                            height: 50,
-                            borderRadius: 4,
-                            borderWidth: 1,
-                            borderColor: '#e4e9f2',
-                            paddingVertical: 7,
-                            paddingHorizontal: 8,
-                            fontSize: 15,
-                            flex: 1,
-                          },
-                        }}
-                        onPress={(data, details) => {
-                          ref.current?.setAddressText(data.description);
-                          setAmazonDestination({
-                            address: data.description,
-                            placeId: data.place_id,
-                            location: details.geometry.location,
-                            country: getCountry(details),
-                          });
-                        }}
-                        query={{
-                          key: 'AIzaSyCcdE49CrgHx3DZeqx3gmXg7VVwjrzNE7k',
-                          language: 'en',
-                        }}
-                      />
-
                       <View
                         style={{
-                          width: 350,
+                          width: '100%',
                           heigth: 400,
+                          marginTop: 40,
                           borderRadius: 20,
                           borderColor: 'black',
                           borderWidth: 0.5,
                           padding: 20,
                         }}
                       >
-                        <Text> Product Price: ${selectedProduct.prices[0].price} </Text>
-                        <Text style={{ marginBottom: 10 }}> Passeio Fee: $10.00</Text>
+                        <Text>Precio de Productos: ${getTotalAmazonPrice()}</Text>
+                        <Text>Envio: ${getTotalAmazonDelivery()}</Text>
+                        <Text style={{ marginBottom: 10 }}>Tarifa: ${getFee()}</Text>
                         <Divider />
-                        <Text style={{ marginTop: 10, fontWeight: '700' }}> Total: $60.00</Text>
+                        <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                          Total: $
+                          {getTotalAmazonPrice() === 'Pendiente' ||
+                          getTotalAmazonDelivery() === 'Pendiente'
+                            ? 'Pendiente'
+                            : getTotalAmazon()}
+                        </Text>
                       </View>
 
                       <SigninButton
@@ -829,14 +966,291 @@ const Send = () => {
                               )
                             : undefined
                         }
-                        disabled={amazonDestination === ''}
-                        onPress={submitAmazon}
+                        disabled={
+                          getTotalAmazonPrice() === 'Pendiente' ||
+                          getTotalAmazonDelivery() === 'Pendiente'
+                        }
+                        onPress={() => toggleModalDestination(true)}
                       >
-                        Confirmar Pedido
+                        Selecionar Pais de Destino
                       </SigninButton>
-                      <Button appearance="ghost" onPress={() => setSelectedProduct(null)}>
+                      <Button appearance="ghost" onPress={cancelOrder}>
                         Cancelar
                       </Button>
+                      <ModalDestination
+                        visible={isModalDestinationOpen}
+                        onClose={() => toggleModalDestination(false)}
+                        item={modalItem}
+                        submit={submitAmazon}
+                        setDestination={setAmazonDestination}
+                        cart={cart}
+                      />
+                    </Content>
+                  ) : null}
+                </>
+              ) : null}
+              {page === 5 ? (
+                <>
+                  {amazonProduct !== null &&
+                  selectedProduct === null &&
+                  amazonProduct !== 'error' ? (
+                    <View>
+                      <Card
+                        status="basic"
+                        header={(headerProps) => (
+                          <View {...headerProps}>
+                            <Image
+                              style={{
+                                width: '100%',
+                                height: 140,
+                                marginVertical: -18,
+                                marginBottom: 0,
+                                top: 4,
+                                resizeMode: 'contain',
+                              }}
+                              source={{
+                                uri: amazonProduct.product.images[0].link,
+                              }}
+                            />
+                          </View>
+                        )}
+                        footer={(footerProps) => (
+                          <Row>
+                            <Text {...footerProps}>
+                              USD ${' '}
+                              {amazonProduct.product.buybox_winner.price
+                                ? amazonProduct.product.buybox_winner.price.value
+                                : 'Undefined'}
+                            </Text>
+                            <Button
+                              style={{ margin: 20 }}
+                              size="medium"
+                              onPress={() => addToCartURL(amazonProduct)}
+                            >
+                              Agregar
+                            </Button>
+                          </Row>
+                        )}
+                      >
+                        <Content>
+                          <Image
+                            style={{
+                              width: 80,
+                              height: 20,
+                              marginVertical: -16,
+                              marginBottom: 22,
+                              resizeMode: 'contain',
+                              right: 20,
+                              top: 20,
+                            }}
+                            source={{
+                              uri:
+                                'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png',
+                            }}
+                          />
+                          <Text>{amazonProduct.product.title}</Text>
+                        </Content>
+                      </Card>
+                      <SigninButton appearance="ghost" onPress={backAmazon}>
+                        Buscar otro Producto
+                      </SigninButton>
+                    </View>
+                  ) : (
+                    <>
+                      {amazonProduct !== 'error' ? (
+                        <View style={{ top: 200 }}>
+                          <View
+                            style={{
+                              marginLeft: 'auto',
+                              marginRight: 'auto',
+                              marginBottom: 20,
+                            }}
+                          >
+                            <Spinner size="giant" />
+                          </View>
+                          <Text style={{ fontSize: 15, textAlign: 'center' }}>
+                            Bucando productos en Amazon!
+                          </Text>
+                        </View>
+                      ) : (
+                        <View>
+                          <Text
+                            style={{
+                              textAlign: 'center',
+                              width: '80%',
+                              marginRight: 'auto',
+                              marginLeft: 'auto',
+                              fontWeight: '700',
+                              fontSize: 15,
+                            }}
+                          >
+                            No se encontro su producto ingrese los valor manualmente
+                          </Text>
+                          <Input
+                            size="large"
+                            autoCapitalize="none"
+                            value={manulProduct.productUrl}
+                            label="URL"
+                            placeholder="Cual es el url del producto?"
+                            accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
+                            onChangeText={(nextValue) =>
+                              setManulProduct({ ...manulProduct, productUrl: nextValue })
+                            }
+                          />
+                          <Input
+                            size="large"
+                            autoCapitalize="none"
+                            value={manulProduct.title}
+                            label="Nombre de Producto"
+                            placeholder="Cual es el nombre del producto?"
+                            accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
+                            onChangeText={(nextValue) =>
+                              setManulProduct({ ...manulProduct, title: nextValue })
+                            }
+                          />
+                          <Input
+                            size="large"
+                            autoCapitalize="none"
+                            value={manulProduct.price}
+                            label="Precio (USD)"
+                            keyboardType="numeric"
+                            placeholder="Cual es el precio del producto?"
+                            accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
+                            onChangeText={(nextValue) =>
+                              setManulProduct({ ...manulProduct, price: nextValue })
+                            }
+                          />
+                          <Input
+                            size="large"
+                            autoCapitalize="none"
+                            value={manulProduct.peso}
+                            label="Peso (Libras)"
+                            keyboardType="numeric"
+                            placeholder="Cual es el peso del producto?"
+                            accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
+                            onChangeText={(nextValue) =>
+                              setManulProduct({ ...manulProduct, peso: nextValue })
+                            }
+                          />
+                          <Text style={{ marginTop: 5, marginBottom: 10 }}>
+                            Selecione la Categoria del Producto
+                          </Text>
+                          <Select
+                            size="large"
+                            value={categories[categoriesIndex.row].name}
+                            selectedIndex={categoriesIndex}
+                            onSelect={(index) => setCategoriesIndex(index)}
+                          >
+                            {categories.map((category) => {
+                              return <SelectItem title={category.name} />;
+                            })}
+                          </Select>
+                          <SigninButton
+                            accessoryLeft={
+                              submitting
+                                ? (props) => (
+                                    <View {...props}>
+                                      <Spinner size="small" />
+                                    </View>
+                                  )
+                                : undefined
+                            }
+                            disabled={
+                              manulProduct.peso === '' ||
+                              manulProduct.productUrl === '' ||
+                              manulProduct.title === '' ||
+                              manulProduct.price === ''
+                            }
+                            onPress={addToCartManual}
+                          >
+                            Cotizar
+                          </SigninButton>
+                          <SigninButton appearance="ghost" onPress={backAmazon}>
+                            Buscar otro Producto
+                          </SigninButton>
+                        </View>
+                      )}
+                    </>
+                  )}
+                  {selectedProduct !== null ? (
+                    <Content style={{ top: '-10%' }}>
+                      <View>
+                        <Carousel
+                          data={cart}
+                          renderItem={(props) => (
+                            <CarouselItem key={shortid.generate()} {...props} modal={handelModal} />
+                          )}
+                          sliderWidth={480}
+                          itemWidth={200}
+                          activeSlideAlignment="start"
+                          inactiveSlideOpacity={0.9}
+                          inactiveSlideScale={0.9}
+
+                          // onSnapToItem={setSelected}
+                        />
+                        <Button style={{ width: 150 }} onPress={addAnotherProduct}>
+                          <Text style={{ fontSize: 9 }}>Agregar Producto</Text>
+                        </Button>
+                      </View>
+                      <Text style={{ color: 'red', marginTop: 20 }}>
+                        {getTotalAmazonPrice() === 'Pendiente' ||
+                        getTotalAmazonDelivery() === 'Pendiente'
+                          ? 'Tienes minimo 1 producto que le falta informacion dale click para llenarla'
+                          : null}
+                      </Text>
+                      <View
+                        style={{
+                          width: '100%',
+                          heigth: 400,
+                          marginTop: 40,
+                          borderRadius: 20,
+                          borderColor: 'black',
+                          borderWidth: 0.5,
+                          padding: 20,
+                        }}
+                      >
+                        <Text>Precio de Productos: ${getTotalAmazonPrice()}</Text>
+                        <Text>Envio: ${getTotalAmazonDelivery()}</Text>
+                        <Text style={{ marginBottom: 10 }}>Tarifa: ${getFee()}</Text>
+                        <Divider />
+                        <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                          Total: $
+                          {getTotalAmazonPrice() === 'Pendiente' ||
+                          getTotalAmazonDelivery() === 'Pendiente'
+                            ? 'Pendiente'
+                            : getTotalAmazon()}
+                        </Text>
+                      </View>
+
+                      <SigninButton
+                        accessoryLeft={
+                          submitting
+                            ? (props) => (
+                                <View {...props}>
+                                  <Spinner size="small" />
+                                </View>
+                              )
+                            : undefined
+                        }
+                        disabled={
+                          getTotalAmazonPrice() === 'Pendiente' ||
+                          getTotalAmazonDelivery() === 'Pendiente'
+                        }
+                        onPress={() => toggleModalDestination(true)}
+                      >
+                        Selecionar Pais de Destino
+                      </SigninButton>
+                      <Button appearance="ghost" onPress={cancelOrder}>
+                        Cancelar
+                      </Button>
+                      <ModalDestination
+                        visible={isModalDestinationOpen}
+                        onClose={() => toggleModalDestination(false)}
+                        item={modalItem}
+                        submit={submitAmazon}
+                        setDestination={setAmazonDestination}
+                        cart={cart}
+                      />
                     </Content>
                   ) : null}
                 </>
@@ -844,6 +1258,14 @@ const Send = () => {
             </>
           )}
         </Container>
+        <Modal
+          visible={isModalOpen}
+          onClose={() => toggleModal(false)}
+          item={modalItem}
+          setCart={setCart}
+          cart={cart}
+          removeFromCart={removeFromCart}
+        />
       </KeyboardAwareScroll>
     </>
   );

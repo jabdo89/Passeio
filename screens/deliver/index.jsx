@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import firebase from 'firebase';
 import 'firebase/firestore';
 import { StyleSheet, View, Alert, Image } from 'react-native';
+import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import shortid from 'shortid';
 import Carousel from 'react-native-snap-carousel';
-import { StatusBar, setStatusBarNetworkActivityIndicatorVisible } from 'expo-status-bar';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import KeyboardAwareScroll from '@components/keyboard-aware-scroll';
 import {
@@ -22,6 +22,7 @@ import {
   TabBar,
   Divider,
 } from '@ui-kitten/components';
+import { useAuth } from '@providers/auth';
 import {
   Container,
   Content,
@@ -40,6 +41,8 @@ import { Title } from '../send/elements';
 const Deliver = () => {
   const ref = useRef();
   const mapRef = useRef({});
+  const { user } = useAuth();
+  const { top } = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     startPoint: '',
@@ -57,7 +60,10 @@ const Deliver = () => {
   const [page, setPage] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const [servicesLocal, setServicesLocal] = useState();
+  const [servicesLocalFiltered, setServicesLocalFiltered] = useState();
   const [services, setServices] = useState();
+  const [servicesFiltered, setServicesFiltered] = useState();
 
   const [selected, setSelected] = useState(null);
 
@@ -68,6 +74,24 @@ const Deliver = () => {
     setIsAddressError(form.destination.country !== form.startPoint.country);
   }, [form.destination, form.startPoint]);
 
+  function filterServicesLocal() {
+    const temp = [];
+    for (let i = 0; i < servicesLocal.length; i++) {
+      if (servicesLocal[i].startPoint.country === form.startPoint.country) {
+        temp.push(servicesLocal[i]);
+      }
+    }
+    setServicesLocalFiltered(temp);
+  }
+  function filterServicesInternacional() {
+    const temp = [];
+    for (let i = 0; i < services.length; i++) {
+      if (services[i].destination.country === formInter.destination.country) {
+        temp.push(services[i]);
+      }
+    }
+    setServicesFiltered(temp);
+  }
   const next = async () => {
     if (isAddressError) {
       setSubmittedTry(true);
@@ -75,16 +99,28 @@ const Deliver = () => {
     }
     let temp = page;
     temp += 1;
+    filterServicesLocal();
+    filterServicesInternacional();
+    setPage(temp);
+  };
+
+  const nextInter = async () => {
+    let temp = page;
+    temp += 1;
+    filterServicesInternacional();
     setPage(temp);
   };
   const back = async () => {
     setPage(0);
   };
+  const backInter = async () => {
+    setPage(4);
+  };
 
   // List attributes
   const styles = StyleSheet.create({
     container: {
-      maxHeight: 340,
+      maxHeight: '60%',
     },
   });
 
@@ -110,16 +146,22 @@ const Deliver = () => {
 
     const query = async () => {
       db.collection('Services').onSnapshot((querySnapshot) => {
-        const info = [];
+        const infoLocal = [];
+        const infoInternacional = [];
         let data = {};
         // eslint-disable-next-line func-names
         querySnapshot.forEach((doc) => {
           data = doc.data();
           if (data.driverID === '') {
-            info.push(doc.data());
+            if (data.type === 'Amazon') {
+              infoInternacional.push(doc.data());
+            } else {
+              infoLocal.push(doc.data());
+            }
           }
         });
-        setServices(info);
+        setServicesLocal(infoLocal);
+        setServices(infoInternacional);
         setLoading(false);
       });
     };
@@ -158,13 +200,18 @@ const Deliver = () => {
     return tempArray;
   };
 
-  const submitLocal = async (id) => {
+  const submitLocal = async (selectedService) => {
     setSubmitting(true);
     const db = firebase.firestore();
-    const user = firebase.auth().currentUser;
+    const fee = selectedService.total.total * 0.66;
+    const newCredit = user.credit + fee;
     db.collection('Services')
-      .doc(id)
-      .update({ driverID: user.uid, status: 'Chofer Encontrado' })
+      .doc(selectedService.id)
+      .update({
+        driverID: user.uid,
+        status: 'Chofer Encontrado',
+        driverName: `${user.firstName} ${user.lastName}`,
+      })
       .then(async (docRef) => {
         setSubmitting(false);
         setForm({
@@ -173,6 +220,9 @@ const Deliver = () => {
           size: '',
           date: new Date(),
         });
+        db.collection('Users').doc(user.uid).update({
+          credit: newCredit,
+        });
         setPage(0);
         Alert.alert('Entrega Confirmada', 'El cliente esta pagando su pedido', [
           { text: 'OK', onPress: () => navigate('ServiceList') },
@@ -180,15 +230,25 @@ const Deliver = () => {
       });
   };
 
-  const submitAmazon = async (id) => {
+  const submitAmazon = async (selectedService) => {
     setSubmitting(true);
     const db = firebase.firestore();
-    const user = firebase.auth().currentUser;
+    const fee = selectedService.total.delivery * 0.66;
+    const newCredit = user.credit + fee;
+
     db.collection('Services')
-      .doc(id)
-      .update({ driverID: user.uid, status: 'Chofer Encontrado' })
+      .doc(selectedService.id)
+      .update({
+        driverID: user.uid,
+        status: 'Chofer Encontrado',
+        driverName: `${user.firstName} ${user.lastName}`,
+      })
       .then(async (docRef) => {
+        setPage(0);
         setSubmitting(false);
+        db.collection('Users').doc(user.uid).update({
+          credit: newCredit,
+        });
         Alert.alert('Entrega Confirmada', 'El cliente esta pagando su pedido', [
           { text: 'OK', onPress: () => navigate('ServiceList') },
         ]);
@@ -217,13 +277,9 @@ const Deliver = () => {
 
   return (
     <>
-      <StatusBar style="auto" />
-      <Header />
-      <Divider />
-
       {page === 0 || page === 4 ? (
         <TabBar
-          style={{ paddingTop: 20 }}
+          style={{ paddingTop: top }}
           selectedIndex={selectedIndex}
           onSelect={(index) => SetTab(index)}
         >
@@ -332,9 +388,10 @@ const Deliver = () => {
                       language: 'en',
                     }}
                   />
-                  <Question style={{ marginTop: 20 }}> When are you planning to arrive? </Question>
+                  <Question style={{ marginTop: 20 }}> ¿Cuando Planeas Llegar? </Question>
                   <Datepicker
                     date={form.date}
+                    filter={(date) => new Date() < date}
                     onSelect={(nextDate) => setForm({ ...form, date: nextDate })}
                   />
                   <SigninButton
@@ -351,7 +408,7 @@ const Deliver = () => {
                     disabled={submitting || form.destination === '' || form.startPoint === ''}
                     onPress={next}
                   >
-                    Ver Entregas
+                    Ver Productos
                   </SigninButton>
                   {isAddressError && submittedTry ? (
                     <Text
@@ -376,35 +433,52 @@ const Deliver = () => {
                 Sit tight and relax! We will send you an email when we have confirmed if there is a
                 MailMan for your package!
               </Message>
-              <Button appearance="ghost" onPress={() => back()}>
-                Back, change info
-              </Button>
+              <Button onPress={() => back()}>Back, change info</Button>
             </Content>
           ) : null}
           {page === 1 ? (
             <Content>
               <View>
-                <View>
+                <View style={{ marginTop: top }}>
                   {loading === false ? (
-                    <Map ref={mapRef} services={services} center={center} form={form} />
+                    <Map
+                      ref={mapRef}
+                      services={servicesLocalFiltered}
+                      center={center}
+                      form={form}
+                    />
                   ) : null}
                 </View>
-                {services ? (
+                {servicesLocalFiltered.length === 0 ? (
+                  <View
+                    style={{
+                      marginTop: 100,
+                      marginBottom: 50,
+                      width: '70%',
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, textAlign: 'center' }}>
+                      No hay entregas en esta <Text style={{ fontWeight: '700' }}>Ubicacion</Text>
+                      y/o <Text style={{ fontWeight: '700' }}>Fecha</Text>, busca una diferente!
+                    </Text>
+                  </View>
+                ) : (
                   <List
-                    data={services}
+                    data={servicesLocalFiltered}
                     style={styles.container}
-                    renderItem={({ item }) => (
+                    renderItem={({ item, index }) => (
                       <Card
                         status="basic"
                         footer={(footerProps) => (
                           <Row {...footerProps}>
-                            <Text style={{ left: 20 }}>
-                              <Text style={{ fontWeight: 'bold' }}>Current Bid: </Text> $10.00
+                            <Text style={{ left: 20, fontWeight: 'bold', fontSize: 19 }}>
+                              Ganancias: ${parseFloat(item.total.total * 0.66).toFixed(2)}
                             </Text>
                             <Button
                               onPress={() => goToPagareLocal(item)}
-                              style={{ margin: 10, left: -30 }}
-                              size="small"
+                              style={{ margin: 10, left: -30, backgroundColor: '#28282B' }}
                             >
                               Enviar
                             </Button>
@@ -425,24 +499,52 @@ const Deliver = () => {
                             }}
                           />
                           <View>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                width: '70%',
+                              }}
+                            >
+                              <Text style={{ width: 120, fontWeight: 'bold' }}>
+                                {moment(item.date.seconds * 1000)
+                                  .locale('es')
+                                  .format('ddd, D MMM')}
+                              </Text>
+                              <View
+                                style={{
+                                  height: 40,
+                                  width: 40,
+                                  borderRadius: 20,
+                                  backgroundColor: '#DBAF05',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Text style={{ fontSize: 14, color: 'white' }}>{index + 1}</Text>
+                              </View>
+                            </View>
+
+                            <Text style={{ width: 200 }}>
+                              Origen : {item.startPoint.address.substring(0, 40)}
+                            </Text>
                             <Text>Cantidad : {item.quantity}</Text>
-                            <Text>Descripcion :</Text>
                             <Text>Peso : {item.weight}</Text>
                           </View>
                         </Row>
                       </Card>
                     )}
                   />
-                ) : null}
+                )}
                 <Button appearance="ghost" onPress={() => back()}>
-                  Back, change info
+                  Buscar otra Ubicacion y/o Fecha
                 </Button>
               </View>
             </Content>
           ) : null}
           {page === -1 && selected !== null ? (
             <Content>
-              <Text style={{ fontSize: 22, marginBottom: 10, fontWeight: 'bold' }}>
+              <Text style={{ fontSize: 22, marginBottom: 10, fontWeight: 'bold', marginTop: top }}>
                 Descripcion de Envio
               </Text>
               <Divider />
@@ -460,8 +562,33 @@ const Deliver = () => {
                   }}
                 />
                 <View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      width: '70%',
+                    }}
+                  >
+                    <Text style={{ width: 120, fontWeight: 'bold' }}>
+                      {moment(selected.date.seconds * 1000)
+                        .locale('es')
+                        .format('ddd, D MMM')}
+                    </Text>
+                    <View
+                      style={{
+                        height: 40,
+                        width: 40,
+                        borderRadius: 20,
+                        backgroundColor: '#DBAF05',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, color: 'white' }}>1</Text>
+                    </View>
+                  </View>
                   <Text>Cantidad : {selected.quantity}</Text>
-                  <Text>Descripcion :</Text>
+                  <Text>Tamaño : {selected.size}</Text>
                   <Text>Peso : {selected.weight}</Text>
                 </View>
               </Row>
@@ -475,10 +602,12 @@ const Deliver = () => {
                   padding: 20,
                 }}
               >
-                <Text> Product Price: $ </Text>
-                <Text style={{ marginBottom: 10 }}> Passeio Fee: $10.00</Text>
+                <Text style={{ marginBottom: 10 }}>Valor de Productos: ${selected.value}</Text>
+
                 <Divider />
-                <Text style={{ marginTop: 10, fontWeight: '700' }}> Total: $60.00</Text>
+                <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                  Recompensa: ${parseFloat(selected.total.total * 0.66).toFixed(2)}
+                </Text>
               </View>
 
               <SigninButton
@@ -491,9 +620,9 @@ const Deliver = () => {
                       )
                     : undefined
                 }
-                onPress={() => submitLocal(selected.id)}
+                onPress={() => submitLocal(selected)}
               >
-                Firmar Pagare
+                Entregar Productos
               </SigninButton>
               <Button appearance="ghost" onPress={cancelPagareLocal}>
                 Cancelar
@@ -553,9 +682,10 @@ const Deliver = () => {
                     }}
                   />
                   <View style={{ top: -120, marginTop: 100 }}>
-                    <Question> Cuando planeas llegar? </Question>
+                    <Question> ¿Cuando Planeas Llegar? </Question>
                     <Datepicker
-                      date={form.date}
+                      date={formInter.date}
+                      filter={(date) => new Date() < date}
                       onSelect={(nextDate) => setFormInter({ ...formInter, date: nextDate })}
                     />
                     <SigninButton
@@ -575,7 +705,7 @@ const Deliver = () => {
                           : undefined
                       }
                       disabled={formInter.destination === ''}
-                      onPress={next}
+                      onPress={nextInter}
                     >
                       Buscar Pedidos !
                     </SigninButton>
@@ -585,51 +715,69 @@ const Deliver = () => {
             ) : null}
             {page === 5 ? (
               <>
-                <List
-                  data={filterAmazon(services)}
-                  style={{ height: '80%' }}
-                  renderItem={({ item }) => (
-                    <Card
-                      status="basic"
-                      header={(headerProps) => (
-                        <Carousel
-                          {...headerProps}
-                          data={item.products}
-                          layout="tinder"
-                          layoutCardOffset="0"
-                          renderItem={(props) => (
-                            <CarouselItem key={shortid.generate()} {...props} />
-                          )}
-                          sliderWidth={480}
-                          itemWidth={200}
-                          activeSlideAlignment="start"
-                          inactiveSlideOpacity={0.9}
-                          inactiveSlideScale={0.9}
-
-                          // onSnapToItem={setSelected}
-                        />
-                      )}
-                      footer={(footerProps) => (
-                        <Row {...footerProps}>
-                          <Text style={{ left: 20, fontSize: 9 }}>
-                            Recompensa : <Text style={{ fontWeight: 'bold' }}>$10.00</Text>
-                          </Text>
-                          <Button
-                            onPress={() => goToPagare(item)}
-                            style={{ margin: 10, left: -30 }}
-                            size="small"
-                          >
-                            Entregar
-                          </Button>
-                        </Row>
-                      )}
-                    >
-                      <Text>Cantidad de articulos: {item.products.length}</Text>
-                      <Text>Entregar en: {item.destination.country}</Text>
-                      <Text style={{ fontWeight: '800' }}>Inversión: ${item.total}</Text>
-                    </Card>
-                  )}
-                />
+                {servicesFiltered.length === 0 ? (
+                  <View
+                    style={{
+                      marginTop: 100,
+                      marginBottom: 50,
+                      width: '70%',
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, textAlign: 'center' }}>
+                      No hay entregas en esta <Text style={{ fontWeight: '700' }}>Ubicacion</Text>{' '}
+                      y/o <Text style={{ fontWeight: '700' }}>Fecha</Text>, busca una diferente!
+                    </Text>
+                  </View>
+                ) : (
+                  <List
+                    data={servicesFiltered}
+                    style={{ height: '65%', marginBottom: 20 }}
+                    renderItem={({ item }) => (
+                      <Card
+                        status="basic"
+                        header={(headerProps) => (
+                          <Carousel
+                            {...headerProps}
+                            data={item.products}
+                            layout="tinder"
+                            layoutCardOffset="0"
+                            renderItem={(props) => (
+                              <CarouselItem key={shortid.generate()} {...props} />
+                            )}
+                            sliderWidth={480}
+                            itemWidth={200}
+                            activeSlideAlignment="start"
+                            inactiveSlideOpacity={0.9}
+                            inactiveSlideScale={0.9}
+                          />
+                        )}
+                        footer={(footerProps) => (
+                          <Row {...footerProps}>
+                            <Text style={{ left: 20, fontSize: 9 }}>
+                              Recompensa :
+                              <Text style={{ fontWeight: 'bold' }}>
+                                ${parseFloat(item.total.delivery * 0.66).toFixed(2)}
+                              </Text>
+                            </Text>
+                            <Button
+                              onPress={() => goToPagare(item)}
+                              style={{ margin: 10, left: -30 }}
+                              size="small"
+                            >
+                              Entregar
+                            </Button>
+                          </Row>
+                        )}
+                      >
+                        <Text>Cantidad de articulos: {item.products.length}</Text>
+                        <Text>Entregar en: {item.destination.country}</Text>
+                      </Card>
+                    )}
+                  />
+                )}
+                <Button onPress={backInter}>Buscar otras fechas/destino</Button>
               </>
             ) : null}
             {page === 6 && selected !== null ? (
@@ -657,10 +805,14 @@ const Deliver = () => {
                     padding: 20,
                   }}
                 >
-                  <Text> Product Price: ${selected.total} </Text>
-                  <Text style={{ marginBottom: 10 }}> Passeio Fee: $10.00</Text>
+                  <Text style={{ marginBottom: 10 }}>
+                    Valor de Productos: ${selected.total.products}
+                  </Text>
+
                   <Divider />
-                  <Text style={{ marginTop: 10, fontWeight: '700' }}> Total: $60.00</Text>
+                  <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                    Recompensa: ${parseFloat(selected.total.delivery * 0.66).toFixed(2)}
+                  </Text>
                 </View>
 
                 <SigninButton
@@ -673,9 +825,9 @@ const Deliver = () => {
                         )
                       : undefined
                   }
-                  onPress={() => submitAmazon(selected.id)}
+                  onPress={() => submitAmazon(selected)}
                 >
-                  Firmar Pagare
+                  Entregar Productos
                 </SigninButton>
                 <Button appearance="ghost" onPress={cancelPagare}>
                   Cancelar
