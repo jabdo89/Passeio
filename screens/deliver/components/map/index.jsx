@@ -1,5 +1,5 @@
+/* eslint-disable react/prop-types */
 import React, { forwardRef, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import * as Location from 'expo-location';
 import { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import { Alert } from 'react-native';
@@ -86,7 +86,7 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
               </MarkerText>
             </CustomMarker>
           </Marker>
-          {/* <Marker
+          <Marker
             key={startPoint.address}
             identifier={startPoint.address}
             pinColor={theme['color-warning-100']}
@@ -97,7 +97,7 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
                 {index + 1}
               </MarkerText>
             </CustomMarker>
-          </Marker> */}
+          </Marker>
         </>
       ))}
       <Polyline
@@ -111,37 +111,5 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
     </BackgroundMap>
   );
 });
-
-Map.defaultProps = {
-  services: [],
-};
-
-Map.propTypes = {
-  center: PropTypes.func.isRequired,
-  selected: PropTypes.number.isRequired,
-  services: PropTypes.arrayOf(
-    PropTypes.shape({
-      declaredValue: PropTypes.number,
-      hub: PropTypes.string,
-      startTime: PropTypes.any,
-      startDate: PropTypes.any,
-      hubAddress: PropTypes.shape({
-        location: PropTypes.shape({
-          lat: PropTypes.any,
-          lng: PropTypes.any,
-        }),
-      }),
-      deliveries: PropTypes.arrayOf(
-        PropTypes.shape({
-          name: PropTypes.string,
-          email: PropTypes.string,
-          phone: PropTypes.string,
-          address: PropTypes.string,
-          comments: PropTypes.string,
-        })
-      ),
-    })
-  ),
-};
 
 export default Map;

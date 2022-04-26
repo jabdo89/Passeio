@@ -1,9 +1,8 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
-import { Text, Avatar } from '@ui-kitten/components';
-import { Image, StyleSheet, View } from 'react-native';
-import { Card, Tag, TagsContainer, Icon, WithIcon } from './elements';
+import { Image, View } from 'react-native';
 
-const CarouselItem = ({ item, theme }) => {
+const CarouselItem = ({ item }) => {
   return (
     <View style={{ height: 300, margin: 0, width: 200, marginLeft: 100 }}>
       <Image

@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 import React, { useState, useEffect, useRef } from 'react';
 import firebase from 'firebase';
 import 'firebase/firestore';
@@ -15,7 +16,6 @@ import {
   Spinner,
   Datepicker,
   List,
-  Avatar,
   Card,
   Text,
   Tab,
@@ -23,20 +23,9 @@ import {
   Divider,
 } from '@ui-kitten/components';
 import { useAuth } from '@providers/auth';
-import {
-  Container,
-  Content,
-  SigninButton,
-  Question,
-  TextSection,
-  Message,
-  Row,
-  AvatarSection,
-} from './elements';
-import Header from './components/header';
+import { Container, Content, SigninButton, Question, Message, Row } from './elements';
 import CarouselItem from './components/carousel-item';
 import Map from './components/map';
-import { Title } from '../send/elements';
 
 const Deliver = () => {
   const ref = useRef();
@@ -181,23 +170,14 @@ const Deliver = () => {
     setSelectedIndex(index);
   };
 
-  //Get Country
+  // Get Country
+  // eslint-disable-next-line consistent-return
   const getCountry = (data) => {
     for (let i = 0; i < data.address_components.length; i++) {
       if (data.address_components[i].types.includes('country')) {
         return data.address_components[i].long_name;
       }
     }
-  };
-
-  const filterAmazon = (data) => {
-    const tempArray = [];
-    for (let i = 0; i < data.length; i++) {
-      if (data[i].type === 'Amazon') {
-        tempArray.push(data[i]);
-      }
-    }
-    return tempArray;
   };
 
   const submitLocal = async (selectedService) => {
@@ -212,7 +192,7 @@ const Deliver = () => {
         status: 'Chofer Encontrado',
         driverName: `${user.firstName} ${user.lastName}`,
       })
-      .then(async (docRef) => {
+      .then(async () => {
         setSubmitting(false);
         setForm({
           startPoint: '',
@@ -243,7 +223,7 @@ const Deliver = () => {
         status: 'Chofer Encontrado',
         driverName: `${user.firstName} ${user.lastName}`,
       })
-      .then(async (docRef) => {
+      .then(async () => {
         setPage(0);
         setSubmitting(false);
         db.collection('Users').doc(user.uid).update({
@@ -301,11 +281,11 @@ const Deliver = () => {
                       color: '#8f9bb3',
                     }}
                   >
-                    Dirrecion de Comienzo
+                    Dirección de Comienzo
                   </Text>
                   <GooglePlacesAutocomplete
                     ref={ref}
-                    placeholder="Buscar dirrecion..."
+                    placeholder="Buscar dirección..."
                     listViewDisplayed={false}
                     fetchDetails
                     styles={{
@@ -346,11 +326,11 @@ const Deliver = () => {
                       color: '#8f9bb3',
                     }}
                   >
-                    Dirrecion de Destino
+                    Dirección de Destino
                   </Text>
                   <GooglePlacesAutocomplete
                     ref={ref}
-                    placeholder="Buscar dirrecion..."
+                    placeholder="Buscar dirección..."
                     listViewDisplayed={false}
                     fetchDetails
                     styles={{
@@ -388,7 +368,7 @@ const Deliver = () => {
                       language: 'en',
                     }}
                   />
-                  <Question style={{ marginTop: 20 }}> ¿Cuando Planeas Llegar? </Question>
+                  <Question style={{ marginTop: 20 }}> ¿Cuándo planeas llegar? </Question>
                   <Datepicker
                     date={form.date}
                     filter={(date) => new Date() < date}
@@ -408,7 +388,7 @@ const Deliver = () => {
                     disabled={submitting || form.destination === '' || form.startPoint === ''}
                     onPress={next}
                   >
-                    Ver Productos
+                    ¡Buscar pedidos!
                   </SigninButton>
                   {isAddressError && submittedTry ? (
                     <Text
@@ -460,8 +440,9 @@ const Deliver = () => {
                     }}
                   >
                     <Text style={{ fontSize: 15, textAlign: 'center' }}>
-                      No hay entregas en esta <Text style={{ fontWeight: '700' }}>Ubicacion</Text>
-                      y/o <Text style={{ fontWeight: '700' }}>Fecha</Text>, busca una diferente!
+                      Por el momento no hay viajes para esta{' '}
+                      <Text style={{ fontWeight: '700' }}>Ubicacion</Text>o{' '}
+                      <Text style={{ fontWeight: '700' }}>Fecha</Text>.
                     </Text>
                   </View>
                 ) : (
@@ -473,14 +454,14 @@ const Deliver = () => {
                         status="basic"
                         footer={(footerProps) => (
                           <Row {...footerProps}>
-                            <Text style={{ left: 20, fontWeight: 'bold', fontSize: 19 }}>
-                              Ganancias: ${parseFloat(item.total.total * 0.66).toFixed(2)}
+                            <Text style={{ left: 20, fontWeight: 'bold', fontSize: 16 }}>
+                              Recompensa: ${parseFloat(item.total.total * 0.66).toFixed(2)}
                             </Text>
                             <Button
                               onPress={() => goToPagareLocal(item)}
                               style={{ margin: 10, left: -30, backgroundColor: '#28282B' }}
                             >
-                              Enviar
+                              Entregar
                             </Button>
                           </Row>
                         )}
@@ -525,11 +506,11 @@ const Deliver = () => {
                               </View>
                             </View>
 
-                            <Text style={{ width: 200 }}>
-                              Origen : {item.startPoint.address.substring(0, 40)}
+                            <Text style={{ width: 200, fontWeight: 'bold' }}>
+                              {item.startPoint.address.substring(0, 40)}
                             </Text>
-                            <Text>Cantidad : {item.quantity}</Text>
-                            <Text>Peso : {item.weight}</Text>
+                            <Text>Cantidad: {item.quantity}</Text>
+                            <Text>Peso: {item.weight} libras</Text>
                           </View>
                         </Row>
                       </Card>
@@ -537,7 +518,7 @@ const Deliver = () => {
                   />
                 )}
                 <Button appearance="ghost" onPress={() => back()}>
-                  Buscar otra Ubicacion y/o Fecha
+                  Buscar otro destino
                 </Button>
               </View>
             </Content>
@@ -545,7 +526,7 @@ const Deliver = () => {
           {page === -1 && selected !== null ? (
             <Content>
               <Text style={{ fontSize: 22, marginBottom: 10, fontWeight: 'bold', marginTop: top }}>
-                Descripcion de Envio
+                Descripción de Envío
               </Text>
               <Divider />
               <Row style={{ justifyContent: 'flex-start', marginTop: 20, marginBottom: 20 }}>
@@ -588,29 +569,35 @@ const Deliver = () => {
                     </View>
                   </View>
                   <Text>Cantidad : {selected.quantity}</Text>
-                  <Text>Tamaño : {selected.size}</Text>
                   <Text>Peso : {selected.weight}</Text>
                 </View>
               </Row>
+              <Text style={{ width: '100%' }}>
+                <Text style={{ fontWeight: 'bold' }}>Origen</Text> : {selected.startPoint.address}
+              </Text>
+              <Text style={{ width: '100%', marginTop: 20 }}>
+                <Text style={{ fontWeight: 'bold' }}>Destino</Text> : {selected.destination.address}
+              </Text>
               <View
                 style={{
-                  width: 350,
+                  width: '90%',
                   heigth: 400,
                   borderRadius: 20,
                   borderColor: 'black',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
                   borderWidth: 0.5,
+                  marginTop: 20,
                   padding: 20,
                 }}
               >
-                <Text style={{ marginBottom: 10 }}>Valor de Productos: ${selected.value}</Text>
-
-                <Divider />
-                <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                <Text style={{ marginTop: 0, fontWeight: '700' }}>
                   Recompensa: ${parseFloat(selected.total.total * 0.66).toFixed(2)}
                 </Text>
               </View>
 
               <SigninButton
+                style={{ width: '90%', marginLeft: 'auto', marginRight: 'auto' }}
                 accessoryLeft={
                   submitting
                     ? (props) => (
@@ -644,11 +631,11 @@ const Deliver = () => {
                       color: '#8f9bb3',
                     }}
                   >
-                    Pais de Destino
+                    País de destino
                   </Text>
                   <GooglePlacesAutocomplete
                     ref={ref}
-                    placeholder="Buscar dirrecion..."
+                    placeholder="Buscar dirección..."
                     listViewDisplayed={false}
                     fetchDetails
                     styles={{
@@ -682,7 +669,7 @@ const Deliver = () => {
                     }}
                   />
                   <View style={{ top: -120, marginTop: 100 }}>
-                    <Question> ¿Cuando Planeas Llegar? </Question>
+                    <Question> ¿Cuándo planeas llegar? </Question>
                     <Datepicker
                       date={formInter.date}
                       filter={(date) => new Date() < date}
@@ -707,7 +694,7 @@ const Deliver = () => {
                       disabled={formInter.destination === ''}
                       onPress={nextInter}
                     >
-                      Buscar Pedidos !
+                      ¡Buscar pedidos!
                     </SigninButton>
                   </View>
                 </Content>
@@ -726,8 +713,9 @@ const Deliver = () => {
                     }}
                   >
                     <Text style={{ fontSize: 15, textAlign: 'center' }}>
-                      No hay entregas en esta <Text style={{ fontWeight: '700' }}>Ubicacion</Text>{' '}
-                      y/o <Text style={{ fontWeight: '700' }}>Fecha</Text>, busca una diferente!
+                      Por el momento no hay viajes para esta
+                      <Text style={{ fontWeight: '700' }}>Ubicacion</Text> o
+                      <Text style={{ fontWeight: '700' }}>Fecha</Text>.
                     </Text>
                   </View>
                 ) : (
@@ -777,7 +765,7 @@ const Deliver = () => {
                     )}
                   />
                 )}
-                <Button onPress={backInter}>Buscar otras fechas/destino</Button>
+                <Button onPress={backInter}>Buscar otro destino</Button>
               </>
             ) : null}
             {page === 6 && selected !== null ? (

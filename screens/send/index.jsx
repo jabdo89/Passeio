@@ -488,11 +488,11 @@ const Send = ({ route }) => {
                       color: '#8f9bb3',
                     }}
                   >
-                    Dirrecion de Comienzo
+                    Dirección de comienzo
                   </Text>
                   <GooglePlacesAutocomplete
                     ref={ref}
-                    placeholder="Buscar dirrecion..."
+                    placeholder="Buscar dirección..."
                     listViewDisplayed={false}
                     fetchDetails
                     styles={{
@@ -533,11 +533,11 @@ const Send = ({ route }) => {
                       color: '#8f9bb3',
                     }}
                   >
-                    Dirrecion de Destino
+                    Dirección de destino
                   </Text>
                   <GooglePlacesAutocomplete
                     ref={ref}
-                    placeholder="Buscar dirrecion..."
+                    placeholder="Buscar dirección..."
                     listViewDisplayed={false}
                     fetchDetails
                     styles={{
@@ -582,7 +582,7 @@ const Send = ({ route }) => {
                     value={form.value}
                     label="Valor ($USD)"
                     keyboardType="numeric"
-                    placeholder="Cual es el precio del producto?"
+                    placeholder="¿Cuál es el valor del paquete?"
                     caption={submittedTry && isValueError && 'Ingresa un valor valido'}
                     captionIcon={(props) =>
                       submittedTry &&
@@ -645,7 +645,7 @@ const Send = ({ route }) => {
                     disabled={submitting || form.destination === '' || form.startPoint === ''}
                     onPress={next}
                   >
-                    Siguiente Paso!
+                    ¡Siguiente paso!
                   </SigninButton>
                   {isAddressError ? (
                     <Text
@@ -666,7 +666,7 @@ const Send = ({ route }) => {
               {page === 1 ? (
                 <Content>
                   <Datepicker
-                    label="Que Fecha quieres que llegue tu paquete?"
+                    label="¿Qué fecha quieres que llegue tu paquete?"
                     date={form.date}
                     filter={(date) => new Date() < date}
                     onSelect={(nextDate) => setForm({ ...form, date: nextDate })}
@@ -716,7 +716,7 @@ const Send = ({ route }) => {
                       padding: 20,
                     }}
                   >
-                    <Text> Costo de Envio: ${precio.precio} </Text>
+                    <Text>Costo de envío: ${precio.precio} </Text>
                     {/* <Text style={{ marginBottom: 10 }}> Impuestos: ${precio.impuesto}</Text> */}
                     <Divider />
                     <Text style={{ marginTop: 10, fontWeight: '700' }}>
@@ -736,10 +736,10 @@ const Send = ({ route }) => {
                     disabled={submitting || isImageError}
                     onPress={submit}
                   >
-                    Confirmar Envío
+                    ¡Confirmar pedido,es gratis!
                   </SigninButton>
                   <Button appearance="ghost" onPress={() => back()}>
-                    Atras, cambiar informacion
+                    Atrás, cambiar información
                   </Button>
                 </Content>
               ) : null}
