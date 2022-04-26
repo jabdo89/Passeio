@@ -1,3 +1,5 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,38 +29,26 @@ import Modal from './components/modal';
 import ModalDestination from './components/modal-destination';
 import TakePhotoModal from '../../templates/take-photo-modal';
 import CarouselItem from './components/carousel-item';
-import {
-  Container,
-  Content,
-  Input,
-  SigninButton,
-  Question,
-  Price,
-  Message,
-  Row,
-  TextSection,
-  AvatarSection,
-  Subtitle,
-} from './elements';
-
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-  let R = 6371; // Radius of the earth in km
-  let dLat = deg2rad(lat2 - lat1); // deg2rad below
-  let dLon = deg2rad(lon2 - lon1);
-  let a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c; // Distance in km
-  return d;
-}
+import { Container, Content, Input, SigninButton, Row } from './elements';
 
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
 
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1); // deg2rad below
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+}
+
 const Send = ({ route }) => {
-  const params = route.params;
+  const { params } = route;
 
   const ref = useRef();
   const { top } = useSafeAreaInsets();
@@ -90,7 +80,6 @@ const Send = ({ route }) => {
 
   // Form Conditionals
   const [submittedTry, setSubmittedTry] = useState(false);
-  const [isEmailError, setIsEmailError] = useState(true);
   const [isAddressError, setIsAddressError] = useState(true);
   const [isValueError, setIsValueError] = useState(true);
   const [isWeightError, setIsWeightError] = useState(true);
@@ -100,13 +89,12 @@ const Send = ({ route }) => {
   const [submitting, setSubmitting] = useState(false);
 
   const [isTakePhotoModalOpen, toggleTakePhotoModal] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [precio, setPrecio] = useState({ precio: '', impuestos: '', total: '' });
 
   const [isModalOpen, toggleModal] = useState(false);
   const [isModalDestinationOpen, toggleModalDestination] = useState(false);
-  //Params
+
   useEffect(() => {
     if (params) {
       setPage(params.page);
@@ -133,7 +121,7 @@ const Send = ({ route }) => {
   }, [form.value]);
 
   useEffect(() => {
-    setIsWeightError(form.weight <= 0);
+    setIsWeightError(form.weight <= 0.5);
   }, [form.weight]);
 
   useEffect(() => {
@@ -175,7 +163,6 @@ const Send = ({ route }) => {
     // Do not request access because this relies on the driver already gave access
     // in the Home screen
     const imgRef = firebase.storage().ref().child(`service-images/${shortid.generate()}`);
-    setUploadingImage(true);
     const task = imgRef.put(imageBlob);
     task.on(
       'state_changed',
@@ -190,6 +177,51 @@ const Send = ({ route }) => {
   };
 
   const { navigate } = useNavigation();
+
+  // Price Calculators
+
+  const getTotalAmazonPrice = () => {
+    let num = 0;
+    for (let i = 0; i < cart.length; i++) {
+      if (!cart[i].prices[0]) {
+        num = 'Pendiente';
+        i = cart.length;
+        return num;
+      }
+      num += parseFloat(cart[i].prices[0].price);
+    }
+    return num.toFixed(2);
+  };
+  const getTotalAmazonDelivery = () => {
+    let num = 0;
+    for (let i = 0; i < cart.length; i++) {
+      if (!cart[i].category || !cart[i].weigth) {
+        num = 'Pendiente';
+        return num;
+      }
+      if (cart[i].category.name === 'Otro') {
+        num += cart[i].weigth * 6.5 * 1.15;
+      } else {
+        num += cart[i].category.value;
+      }
+    }
+    return num.toFixed(2);
+  };
+
+  const getFee = () => {
+    let num = getTotalAmazonPrice();
+    num *= 0.036;
+    return num.toFixed(2);
+  };
+
+  const getTotalAmazon = () => {
+    const num =
+      parseFloat(getTotalAmazonPrice()) +
+      parseFloat(getTotalAmazonDelivery()) +
+      parseFloat(getFee());
+
+    return num.toFixed(2);
+  };
 
   const submit = async () => {
     setSubmitting(true);
@@ -246,7 +278,7 @@ const Send = ({ route }) => {
       .then((response) => {
         setAmazonProduct(response.data);
       })
-      .catch((error) => {
+      .catch(() => {
         setAmazonProduct('error');
       });
   };
@@ -317,8 +349,9 @@ const Send = ({ route }) => {
     setSelectedIndex(index);
   };
 
-  //Get Country
+  // Get Country
 
+  // eslint-disable-next-line consistent-return
   const getCountry = (data) => {
     for (let i = 0; i < data.address_components.length; i++) {
       if (data.address_components[i].types.includes('country')) {
@@ -382,7 +415,7 @@ const Send = ({ route }) => {
     { name: 'Smartwatch', value: 35.0 },
     { name: 'Celular', value: 50.0 },
     { name: 'Laptop', value: 55.0 },
-    { name: 'Consola de VideoJuegos', value: 60.0 },
+    { name: 'Consola de videojuego', value: 60.0 },
     { name: 'Tablet', value: 50.0 },
     { name: 'Camara', value: 40.0 },
     { name: 'Audifonos', value: 25.0 },
@@ -408,6 +441,7 @@ const Send = ({ route }) => {
       category: categories[categoriesIndex.row],
     });
     setAmazonProduct(null);
+    setManulProduct({ imageUrl: '', prices: [], productUrl: '', title: '', peso: '' });
     setCart(temp);
   };
   const cancelOrder = () => {
@@ -428,49 +462,6 @@ const Send = ({ route }) => {
   const handelModal = (index) => {
     setModalItem({ index, item: cart[index] });
     toggleModal(true);
-  };
-
-  const getTotalAmazonPrice = () => {
-    let num = 0;
-    for (let i = 0; i < cart.length; i++) {
-      if (!cart[i].prices[0]) {
-        num = 'Pendiente';
-        i = cart.length;
-        return num;
-      }
-      num += parseFloat(cart[i].prices[0].price);
-    }
-    return num.toFixed(2);
-  };
-  const getTotalAmazonDelivery = () => {
-    let num = 0;
-    for (let i = 0; i < cart.length; i++) {
-      if (!cart[i].category || !cart[i].weigth) {
-        num = 'Pendiente';
-        return num;
-      }
-      if (cart[i].category.name === 'Otro') {
-        num += cart[i].weigth * 6.5 * 1.15;
-      } else {
-        num += cart[i].category.value;
-      }
-    }
-    return num.toFixed(2);
-  };
-
-  const getFee = () => {
-    let num = getTotalAmazonPrice();
-    num *= 0.036;
-    return num.toFixed(2);
-  };
-
-  const getTotalAmazon = () => {
-    const num =
-      parseFloat(getTotalAmazonPrice()) +
-      parseFloat(getTotalAmazonDelivery()) +
-      parseFloat(getFee());
-
-    return num.toFixed(2);
   };
 
   return (
@@ -761,14 +752,8 @@ const Send = ({ route }) => {
                     size="large"
                     autoCapitalize="none"
                     value={amazon.search}
-                    label="Buscar Product"
-                    placeholder="Cual es el nombre del Producto?"
-                    caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-                    captionIcon={(props) =>
-                      submittedTry &&
-                      isEmailError && <Icon {...props} name="alert-circle-outline" />
-                    }
-                    status={submittedTry && isEmailError && 'warning'}
+                    label="Buscar Producto"
+                    placeholder="¿Cuál es el nombre del producto?"
                     accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
                     onChangeText={(nextValue) => setAmazon({ ...amazon, search: nextValue })}
                   />
@@ -793,13 +778,7 @@ const Send = ({ route }) => {
                     autoCapitalize="none"
                     value={amazon.url}
                     label="Buscar URL"
-                    placeholder="Cual es el url del Producto?"
-                    caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-                    captionIcon={(props) =>
-                      submittedTry &&
-                      isEmailError && <Icon {...props} name="alert-circle-outline" />
-                    }
-                    status={submittedTry && isEmailError && 'warning'}
+                    placeholder="¿Cuál es el URL del producto?"
                     accessoryLeft={(props) => <Icon {...props} name="link-2-outline" />}
                     onChangeText={(nextValue) => setAmazon({ ...amazon, url: nextValue })}
                   />
@@ -884,7 +863,7 @@ const Send = ({ route }) => {
                         )}
                       />
 
-                      <SigninButton onPress={backAmazon}>Buscar otro Producto</SigninButton>
+                      <SigninButton onPress={backAmazon}>Buscar otro producto</SigninButton>
                     </>
                   ) : (
                     <>
@@ -900,7 +879,7 @@ const Send = ({ route }) => {
                             <Spinner size="giant" />
                           </View>
                           <Text style={{ fontSize: 15, textAlign: 'center' }}>
-                            Bucando productos en Amazon!
+                            Buscando productos!
                           </Text>
                         </View>
                       ) : null}
@@ -923,13 +902,13 @@ const Send = ({ route }) => {
                           // onSnapToItem={setSelected}
                         />
                         <Button style={{ width: 150 }} onPress={addAnotherProduct}>
-                          <Text style={{ fontSize: 9 }}>Agregar Producto</Text>
+                          <Text style={{ fontSize: 9 }}>Agregar otro producto</Text>
                         </Button>
                       </View>
                       <Text style={{ color: 'red', marginTop: 20 }}>
                         {getTotalAmazonPrice() === 'Pendiente' ||
                         getTotalAmazonDelivery() === 'Pendiente'
-                          ? 'Tienes minimo 1 producto que le falta informacion dale click para llenarla'
+                          ? 'Dale click a “Pendiente” para completarlo'
                           : null}
                       </Text>
                       <View
@@ -972,7 +951,7 @@ const Send = ({ route }) => {
                         }
                         onPress={() => toggleModalDestination(true)}
                       >
-                        Selecionar Pais de Destino
+                        Seleccionar país de destino
                       </SigninButton>
                       <Button appearance="ghost" onPress={cancelOrder}>
                         Cancelar
@@ -1052,7 +1031,7 @@ const Send = ({ route }) => {
                         </Content>
                       </Card>
                       <SigninButton appearance="ghost" onPress={backAmazon}>
-                        Buscar otro Producto
+                        Buscar otro producto
                       </SigninButton>
                     </View>
                   ) : (
@@ -1069,7 +1048,7 @@ const Send = ({ route }) => {
                             <Spinner size="giant" />
                           </View>
                           <Text style={{ fontSize: 15, textAlign: 'center' }}>
-                            Bucando productos en Amazon!
+                            Buscando productos
                           </Text>
                         </View>
                       ) : (
@@ -1084,14 +1063,14 @@ const Send = ({ route }) => {
                               fontSize: 15,
                             }}
                           >
-                            No se encontro su producto ingrese los valor manualmente
+                            No se encontró tu producto. Ingresa los valores manualmente.
                           </Text>
                           <Input
                             size="large"
                             autoCapitalize="none"
                             value={manulProduct.productUrl}
                             label="URL"
-                            placeholder="Cual es el url del producto?"
+                            placeholder="¿Cuál es el URL del producto?"
                             accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
                             onChangeText={(nextValue) =>
                               setManulProduct({ ...manulProduct, productUrl: nextValue })
@@ -1101,8 +1080,8 @@ const Send = ({ route }) => {
                             size="large"
                             autoCapitalize="none"
                             value={manulProduct.title}
-                            label="Nombre de Producto"
-                            placeholder="Cual es el nombre del producto?"
+                            label="Nombre del producto"
+                            placeholder="¿Cuál es el nombre del producto?"
                             accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
                             onChangeText={(nextValue) =>
                               setManulProduct({ ...manulProduct, title: nextValue })
@@ -1112,9 +1091,9 @@ const Send = ({ route }) => {
                             size="large"
                             autoCapitalize="none"
                             value={manulProduct.price}
-                            label="Precio (USD)"
+                            label="Precio (USD) sin tax"
                             keyboardType="numeric"
-                            placeholder="Cual es el precio del producto?"
+                            placeholder="¿Cuál es precio del producto?"
                             accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
                             onChangeText={(nextValue) =>
                               setManulProduct({ ...manulProduct, price: nextValue })
@@ -1126,14 +1105,14 @@ const Send = ({ route }) => {
                             value={manulProduct.peso}
                             label="Peso (Libras)"
                             keyboardType="numeric"
-                            placeholder="Cual es el peso del producto?"
+                            placeholder="¿Cuál es el peso del producto?"
                             accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
                             onChangeText={(nextValue) =>
                               setManulProduct({ ...manulProduct, peso: nextValue })
                             }
                           />
                           <Text style={{ marginTop: 5, marginBottom: 10 }}>
-                            Selecione la Categoria del Producto
+                            Selecciona la categoría del producto
                           </Text>
                           <Select
                             size="large"
@@ -1166,7 +1145,7 @@ const Send = ({ route }) => {
                             Cotizar
                           </SigninButton>
                           <SigninButton appearance="ghost" onPress={backAmazon}>
-                            Buscar otro Producto
+                            Buscar otro producto
                           </SigninButton>
                         </View>
                       )}
@@ -1189,13 +1168,13 @@ const Send = ({ route }) => {
                           // onSnapToItem={setSelected}
                         />
                         <Button style={{ width: 150 }} onPress={addAnotherProduct}>
-                          <Text style={{ fontSize: 9 }}>Agregar Producto</Text>
+                          <Text style={{ fontSize: 9 }}>Agregar otro producto</Text>
                         </Button>
                       </View>
                       <Text style={{ color: 'red', marginTop: 20 }}>
                         {getTotalAmazonPrice() === 'Pendiente' ||
                         getTotalAmazonDelivery() === 'Pendiente'
-                          ? 'Tienes minimo 1 producto que le falta informacion dale click para llenarla'
+                          ? 'Dale click a “Pendiente” para completarlo'
                           : null}
                       </Text>
                       <View
@@ -1238,7 +1217,7 @@ const Send = ({ route }) => {
                         }
                         onPress={() => toggleModalDestination(true)}
                       >
-                        Selecionar Pais de Destino
+                        Seleccionar país de destino
                       </SigninButton>
                       <Button appearance="ghost" onPress={cancelOrder}>
                         Cancelar

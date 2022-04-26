@@ -1,14 +1,15 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { Text, Button } from '@ui-kitten/components';
-import { Image, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import ExpoFastImage from 'expo-fast-image';
-import { Card, Tag, TagsContainer, Icon, WithIcon } from './elements';
 
-const CarouselItem = ({ item, theme, navigation: { navigate }, type }) => {
+const CarouselItem = ({ item, navigation: { navigate }, type }) => {
   return (
     <Button
       appearance="ghost"
       onPress={() => {
+        // eslint-disable-next-line no-unused-expressions
         type === 'Category'
           ? navigate('Send', { page: 3, type: 1, search: item.name, url: null })
           : navigate('Send', { page: 3, type: 1, search: null, url: item.url });

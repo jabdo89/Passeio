@@ -1,14 +1,6 @@
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
-import {
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  IndexPath,
-  Text,
-  RadioGroup,
-  Radio,
-} from '@ui-kitten/components';
+import { Button, Input, Text, RadioGroup, Radio } from '@ui-kitten/components';
 import BottomModal from '../../../../templates/bottom-modal';
 import { Title } from './elements';
 
@@ -28,7 +20,7 @@ const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) =>
   ];
 
   const save = () => {
-    let temp = cart;
+    const temp = cart;
     let newData = {};
     if (!item.item.weigth) {
       newData = { ...newData, weigth: value.weigth };
@@ -91,7 +83,9 @@ const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) =>
           })}
         </RadioGroup>
       </>
-      <Button onPress={save}>Guardar</Button>
+      <Button onPress={save} disabled={!item?.item?.weigth && !value.weigth}>
+        Guardar
+      </Button>
       <Button appearance="ghost" style={{ marginTop: 10 }} onPress={remove}>
         <Text style={{ color: 'red' }}>Eliminar de Carrito</Text>
       </Button>

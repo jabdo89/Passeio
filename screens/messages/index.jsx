@@ -1,37 +1,19 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import moment from 'moment';
 import firebase from 'firebase';
-import uuid from 'react-native-uuid';
 import KeyboardAwareScroll from '@components/keyboard-aware-scroll';
-import PropTypes from 'prop-types';
-import { ScrollView } from 'react-native';
-import { Text, Icon, Divider, ListItem, List } from '@ui-kitten/components';
-import MessageModal from '../../templates/message-modal';
-import Message from './components/message';
-// import { useNavigation } from '@react-navigation/native';
+import { Text, Divider, ListItem, List } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Container,
-  Title,
-  WhiteBox,
-  SendButton,
-  MessagesContainer,
-  Scroll,
-  Form,
-  Subtitle,
-  Input,
-} from './elements';
+import MessageModal from '../../templates/message-modal';
+import { Container, Title } from './elements';
 
 const Messages = () => {
   const { top } = useSafeAreaInsets();
   const [services, setServices] = useState([]);
-  const [profile, setProfile] = useState(null);
-  const [messages, setMessages] = useState(null);
   const [modal, setModal] = useState(false);
   const [selected, setSelected] = useState(null);
   const [loadingChat, setLoadingChat] = useState(false);
   const user = firebase.auth().currentUser;
-  const SendIcon = (props) => <Icon {...props} name="navigation-2" />;
 
   const select = (item) => {
     setSelected(item);
@@ -41,7 +23,6 @@ const Messages = () => {
   useEffect(() => {
     const query = () => {
       const db = firebase.firestore();
-      setProfile(user);
       db.collection('Services').onSnapshot((querySnapshot) => {
         const envios = [];
         querySnapshot.forEach((doc) => {
@@ -57,7 +38,7 @@ const Messages = () => {
     query();
   }, []);
 
-  const renderItem = ({ item, index }) => (
+  const renderItem = ({ item }) => (
     <ListItem
       onPress={() => select(item)}
       style={{ minHeight: 100 }}
@@ -98,30 +79,6 @@ const Messages = () => {
       </KeyboardAwareScroll>
     </Container>
   );
-};
-
-Messages.defaultProps = {
-  services: null,
-};
-
-Messages.propTypes = {
-  services: PropTypes.arrayOf(
-    PropTypes.shape({
-      declaredValue: PropTypes.number,
-      hub: PropTypes.string,
-      startTime: PropTypes.any,
-      startDate: PropTypes.any,
-      deliveries: PropTypes.arrayOf(
-        PropTypes.shape({
-          name: PropTypes.string,
-          email: PropTypes.string,
-          phone: PropTypes.string,
-          address: PropTypes.string,
-          comments: PropTypes.string,
-        })
-      ),
-    })
-  ),
 };
 
 export default Messages;

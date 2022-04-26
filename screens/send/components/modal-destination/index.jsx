@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Button, Text } from '@ui-kitten/components';
@@ -13,7 +14,9 @@ const BoolModal = ({ visible, onClose, setDestination, submit }) => {
     onClose();
   };
 
+  // eslint-disable-next-line consistent-return
   const getCountry = (data) => {
+    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < data.address_components.length; i++) {
       if (data.address_components[i].types.includes('country')) {
         return data.address_components[i].long_name;
@@ -24,7 +27,7 @@ const BoolModal = ({ visible, onClose, setDestination, submit }) => {
   return (
     <BottomModal visible={visible} onClose={onClose} style={{ minHeight: 700, display: 'flex' }}>
       <View style={{ minHeight: 300 }}>
-        <Title category="h6">Pais de Destino :</Title>
+        <Title category="h6">País de destino: </Title>
         <Text>{country}</Text>
         <GooglePlacesAutocomplete
           ref={ref}
@@ -59,8 +62,9 @@ const BoolModal = ({ visible, onClose, setDestination, submit }) => {
             language: 'en',
           }}
         />
+
         <Button onPress={save} disabled={country === ''}>
-          Confirmar Pedido
+          ¡Confirmar pedido, es gratis!”
         </Button>
       </View>
     </BottomModal>

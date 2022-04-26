@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import firebase from 'firebase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  StyleSheet,
   Image,
   View,
   ScrollView,
@@ -10,23 +9,14 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import { useTheme, Avatar, Card, Text, List, ListItem, Button, Icon } from '@ui-kitten/components';
+import { useTheme, Text, Button, Icon } from '@ui-kitten/components';
 import Carousel from 'react-native-snap-carousel';
 import shortid from 'shortid';
 import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import Header from './components/header';
 import CarouselItem from './carousel-item';
-import {
-  Welcome,
-  AvatarSection,
-  WelcomeSubTitle,
-  Row,
-  HeaderSection,
-  Container,
-  HeaderRow,
-  Input,
-} from './elements';
+import { Row, Container, Input } from './elements';
 
 const Home = () => {
   const { top } = useSafeAreaInsets();
@@ -36,24 +26,12 @@ const Home = () => {
   // const [loadingServices, setLoadingServices] = useState(true);
   const [promotions, setPromotions] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [services, setServices] = useState([]);
 
   const { navigate } = useNavigation();
 
   const [scrollY, setScrollY] = useState(0);
   const [amazon, setAmazon] = useState({
     search: '',
-  });
-  const styles = StyleSheet.create({
-    container: {
-      maxHeight: 250,
-      marginTop: 10,
-      height: 250,
-    },
-    icon: {
-      width: 32,
-      height: 32,
-    },
   });
 
   useEffect(() => {
@@ -91,28 +69,6 @@ const Home = () => {
     query();
   }, []);
 
-  useEffect(() => {
-    const db = firebase.firestore();
-    const query = async () => {
-      const user = firebase.auth().currentUser;
-      db.collection('Services').onSnapshot((querySnapshot) => {
-        const info = [];
-        // eslint-disable-next-line func-names
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.userID === user.uid) {
-            info.push(doc.data());
-          }
-        });
-        setServices(info);
-        setLoading(false);
-      });
-    };
-    if (loading === true) {
-      query();
-    }
-  }, []);
-
   return (
     <>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}>
@@ -126,13 +82,14 @@ const Home = () => {
         >
           <ImageBackground
             style={{ width: '100%', height: 500, opacity: 1 - scrollY / 500 }}
+            // eslint-disable-next-line global-require
             source={require('./images/home_background.jpeg')}
           >
             <Input
               size="large"
               autoCapitalize="none"
               value={amazon.search}
-              placeholder="Busca cualquier Producto!"
+              placeholder="¡Busca cualquier producto!"
               accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
               accessoryRight={(props) => (
                 <Button
@@ -159,7 +116,7 @@ const Home = () => {
                 marginTop: 80,
               }}
             >
-              Ya sabes que vas a pedir?
+              ¿Ya sabes que vas a pedir?
             </Text>
             <Button
               style={{
@@ -203,14 +160,15 @@ const Home = () => {
                     >
                       <Image
                         style={{ width: 80, height: 80, marginRight: 10, borderRadius: 10 }}
+                        // eslint-disable-next-line global-require
                         source={require('./images/home_enviar.jpg')}
                       />
                       <View>
-                        <Text style={{ fontWeight: 'bold', color: 'black' }}>Enviar</Text>
+                        <Text style={{ fontWeight: 'bold', color: 'black' }}>Pedir</Text>
                         <Text
                           style={{ fontWeight: '300', color: 'black', fontSize: 8, width: 100 }}
                         >
-                          Todo lo que quieras, hasta la puerta de tu casa.
+                          Todo lo que quieras hasta la puerta de tu casa
                         </Text>
                       </View>
                     </View>
@@ -226,14 +184,15 @@ const Home = () => {
                     >
                       <Image
                         style={{ width: 80, height: 80, marginRight: 10, borderRadius: 10 }}
+                        // eslint-disable-next-line global-require
                         source={require('./images/home_deliver.jpg')}
                       />
                       <View>
-                        <Text style={{ fontWeight: 'bold', color: 'black' }}>Entregar</Text>
+                        <Text style={{ fontWeight: 'bold', color: 'black' }}>Viajar</Text>
                         <Text
                           style={{ fontWeight: '300', color: 'black', fontSize: 8, width: 100 }}
                         >
-                          Aprovecha tus viajes, y gana un dinero extra por traer productos
+                          Aprovecha tus viajes y gana dinero extra por traer productos
                         </Text>
                       </View>
                     </View>
@@ -280,14 +239,15 @@ const Home = () => {
                   <Text
                     style={{
                       fontWeight: 'bold',
-                      fontSize: 23,
+                      fontSize: 20,
                       color: 'white',
                       top: 50,
                       marginLeft: 'auto',
                       marginRight: 'auto',
+                      textAlign: 'center',
                     }}
                   >
-                    Prueba Viajar
+                    Aprovecha tus viajes y gana dinero extra por traer productos
                   </Text>
                   <Text
                     style={{
@@ -328,6 +288,7 @@ const Home = () => {
                       borderBottomLeftRadius: 20,
                       borderBottomRightRadius: 20,
                     }}
+                    // eslint-disable-next-line global-require
                     source={require('./images/home_footer.jpeg')}
                   />
                 </View>
@@ -338,6 +299,7 @@ const Home = () => {
                       fontSize: 18,
                       color: 'black',
                       margin: 20,
+                      marginTop: 40,
                     }}
                   >
                     Explora lo que Necesitas

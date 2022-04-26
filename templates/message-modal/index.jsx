@@ -1,30 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { View, Modal, ScrollView, FlatList } from 'react-native';
+/* eslint-disable react/prop-types */
+import React, { useState, useEffect } from 'react';
+import { Modal, FlatList } from 'react-native';
 import KeyboardAwareScroll from '@components/keyboard-aware-scroll';
-import {
-  Layout,
-  Text,
-  TopNavigation,
-  TopNavigationAction,
-  Icon,
-  Button,
-} from '@ui-kitten/components';
+import { Layout, TopNavigation, TopNavigationAction, Icon } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import firebase from 'firebase';
 import uuid from 'react-native-uuid';
 import Message from './components/message';
-import {
-  Container,
-  MessagesContainer,
-  Scroll,
-  WhiteBox,
-  SendButton,
-  Form,
-  Input,
-} from './elements';
+import { Container, WhiteBox, SendButton, Form, Input } from './elements';
 
-const TakePhotoModal = ({
+const MessageModal = ({
   visible,
   onClose,
   onPhotoTaken,
@@ -35,7 +20,6 @@ const TakePhotoModal = ({
   ...rest
 }) => {
   const { top } = useSafeAreaInsets();
-  const scroll = useRef();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -148,9 +132,6 @@ const TakePhotoModal = ({
                 icon={(props) => <Icon {...props} name="arrow-back" />}
               />
             )}
-            accessoryRight={() => (
-              <TopNavigationAction icon={(props) => <Icon {...props} name="phone" />} />
-            )}
           />
         </Layout>
       </Container>
@@ -158,10 +139,4 @@ const TakePhotoModal = ({
   );
 };
 
-TakePhotoModal.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onPhotoTaken: PropTypes.func.isRequired,
-};
-
-export default TakePhotoModal;
+export default MessageModal;

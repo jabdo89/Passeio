@@ -1,9 +1,10 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
-import { Text, Avatar, Button } from '@ui-kitten/components';
-import { Image, StyleSheet, View } from 'react-native';
-import { Card, Tag, TagsContainer, Icon, WithIcon } from './elements';
+import { Text, Button } from '@ui-kitten/components';
+import { Image, View } from 'react-native';
+import { Tag } from './elements';
 
-const CarouselItem = ({ item, index, theme, modal }) => {
+const CarouselItem = ({ item, index, modal }) => {
   return (
     <Button appearance="ghost" onPress={() => modal(index)}>
       <View style={{ height: 140, margin: 0, width: 200 }}>
