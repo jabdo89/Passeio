@@ -5,10 +5,10 @@ import { View, Image, Alert } from 'react-native';
 import shortid from 'shortid';
 import firebase from 'firebase';
 import PropTypes from 'prop-types';
-import { Text, Icon, List, ListItem, Divider, Tab, TabBar, Button } from '@ui-kitten/components';
+import { Text, Icon, List, Card, Modal, Divider, Tab, TabBar, Button } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Container, Tag, Title } from './elements';
+import { Container, Title } from './elements';
 import CarouselItem from './components/carousel-item';
 
 // Uncomment for onPress functionality
@@ -16,6 +16,7 @@ import CarouselItem from './components/carousel-item';
 const Done = () => {
   const { navigate } = useNavigation();
   const { top } = useSafeAreaInsets();
+  const [exitModal, toggleExitModal] = useState({ status: false, value: null });
   const [services, setServices] = useState([]);
   const [servicesEntrega, setServicesEntrega] = useState([]);
   const [loading, setloading] = useState(false);
@@ -60,6 +61,7 @@ const Done = () => {
       .delete()
       .then(() => {
         Alert.alert('Tu servicio se ha borrado');
+        toggleExitModal({ status: false, value: null });
       })
       .catch((error) => {
         Alert.alert(error);
@@ -90,8 +92,8 @@ const Done = () => {
         selectedIndex={selectedIndex}
         onSelect={(index) => setSelectedIndex(index)}
       >
-        <Tab title="Envios" icon={EnviarIcon} />
-        <Tab title="Entregas" icon={EntregarIcon} />
+        <Tab title="Pedidos" icon={EnviarIcon} />
+        <Tab title="Viajes" icon={EntregarIcon} />
       </TabBar>
       {selectedIndex === 0 ? (
         <>
@@ -200,7 +202,10 @@ const Done = () => {
                               .format('ddd, D MMM')}{' '}
                           </Text>
                           {item.status === 'Buscando Chofer' ? (
-                            <Button appearance="ghost" onPress={() => deleteService(item.id)}>
+                            <Button
+                              appearance="ghost"
+                              onPress={() => toggleExitModal({ status: true, value: item.id })}
+                            >
                               <Icon style={{ height: 20, width: 20 }} fill="red" name="trash-2" />
                             </Button>
                           ) : null}
@@ -208,6 +213,7 @@ const Done = () => {
                         <Text>
                           Paquetes : {item.products ? item.products.length : item.quantity}
                         </Text>
+                        <Text>Ref : {item.id.substring(0, 5)}</Text>
                         <Text>Total : ${item.total.total}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
@@ -306,7 +312,10 @@ const Done = () => {
                               .format('ddd, D MMM')}{' '}
                           </Text>
                           {item.status === 'Buscando Chofer' ? (
-                            <Button appearance="ghost" onPress={() => deleteService(item.id)}>
+                            <Button
+                              appearance="ghost"
+                              onPress={() => toggleExitModal({ status: true, value: item.id })}
+                            >
                               <Icon style={{ height: 20, width: 20 }} fill="red" name="trash-2" />
                             </Button>
                           ) : null}
@@ -314,6 +323,7 @@ const Done = () => {
                         <Text>
                           Paquetes : {item.products ? item.products.length : item.quantity}
                         </Text>
+                        <Text>Ref : {item.id.substring(0, 5)}</Text>
                         <Text>Total : ${item.total.total}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
@@ -480,7 +490,7 @@ const Done = () => {
                         <Text>
                           Paquetes: {item.products ? item.products.length : item.quantity}
                         </Text>
-
+                        <Text>Ref : {item.id.substring(0, 5)}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
                             style={{
@@ -567,6 +577,7 @@ const Done = () => {
                         <Text>
                           Paquetes : {item.products ? item.products.length : item.quantity}
                         </Text>
+                        <Text>Ref : {item.id.substring(0, 5)}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
                             style={{
@@ -626,6 +637,25 @@ const Done = () => {
           ) : null}
         </>
       )}
+      <Modal visible={exitModal.status}>
+        <Card disabled>
+          <Text>¿Estás seguro que deseas borrar el pedido?</Text>
+          <Button
+            style={{ marginTop: 10 }}
+            status="danger"
+            appearance="outline"
+            onPress={() => deleteService(exitModal.value)}
+          >
+            Sí, borrar
+          </Button>
+          <Button
+            style={{ marginTop: 10 }}
+            onPress={() => toggleExitModal({ status: false, value: null })}
+          >
+            No, cancelar
+          </Button>
+        </Card>
+      </Modal>
     </Container>
   );
 };

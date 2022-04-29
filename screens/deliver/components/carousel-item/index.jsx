@@ -19,7 +19,9 @@ const CarouselItem = ({ item }) => {
           resizeMode: 'contain',
         }}
         source={{
-          uri: item.imageUrl,
+          uri: item.imageUrl
+            ? item.imageUrl
+            : 'https://upload.wikimedia.org/wikipedia/commons/1/14/Product_sample_icon_picture.png',
         }}
       />
     </View>

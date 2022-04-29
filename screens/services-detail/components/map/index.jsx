@@ -1,15 +1,14 @@
+/* eslint-disable react/prop-types */
 import React, { forwardRef, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import * as Location from 'expo-location';
 import { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import { Alert } from 'react-native';
 import { useTheme } from '@ui-kitten/components';
 import { CustomMarker, MarkerText, BackgroundMap } from './elements';
 
-const Map = forwardRef(({ services, selected, center, form }, ref) => {
+const Map = forwardRef(({ center, form }, ref) => {
   const theme = useTheme();
   const [mapReady, setMapReady] = useState(false);
-  const [firstCenterDone, setFirstCenterDone] = useState(false);
   const [currentCoordinate, setCurrentCoordinate] = useState(null);
 
   useEffect(() => {
@@ -33,7 +32,6 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
     // Only autocenter first time
     if (mapReady) {
       center();
-      setFirstCenterDone(false);
     }
   }, [mapReady, currentCoordinate, form]);
 
@@ -74,34 +72,6 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
           <MarkerText category="h6">E</MarkerText>
         </CustomMarker>
       </Marker>
-      {services.map(({ destination, startPoint }, index) => (
-        <>
-          <Marker
-            key={destination.address}
-            identifier={destination.address}
-            pinColor={theme['color-warning-100']}
-            coordinate={{ latitude: destination.location.lat, longitude: destination.location.lng }}
-          >
-            <CustomMarker current>
-              <MarkerText current category="h6">
-                {index + 1}
-              </MarkerText>
-            </CustomMarker>
-          </Marker>
-          <Marker
-            key={startPoint.address}
-            identifier={startPoint.address}
-            pinColor={theme['color-warning-100']}
-            coordinate={{ latitude: startPoint.location.lat, longitude: startPoint.location.lng }}
-          >
-            <CustomMarker current>
-              <MarkerText current category="h6">
-                {index + 1}
-              </MarkerText>
-            </CustomMarker>
-          </Marker>
-        </>
-      ))}
       {form.startPoint && (
         <Polyline
           coordinates={[
@@ -115,37 +85,5 @@ const Map = forwardRef(({ services, selected, center, form }, ref) => {
     </BackgroundMap>
   );
 });
-
-Map.defaultProps = {
-  services: [],
-};
-
-Map.propTypes = {
-  center: PropTypes.func.isRequired,
-  selected: PropTypes.number.isRequired,
-  services: PropTypes.arrayOf(
-    PropTypes.shape({
-      declaredValue: PropTypes.number,
-      hub: PropTypes.string,
-      startTime: PropTypes.any,
-      startDate: PropTypes.any,
-      hubAddress: PropTypes.shape({
-        location: PropTypes.shape({
-          lat: PropTypes.any,
-          lng: PropTypes.any,
-        }),
-      }),
-      deliveries: PropTypes.arrayOf(
-        PropTypes.shape({
-          name: PropTypes.string,
-          email: PropTypes.string,
-          phone: PropTypes.string,
-          address: PropTypes.string,
-          comments: PropTypes.string,
-        })
-      ),
-    })
-  ),
-};
 
 export default Map;

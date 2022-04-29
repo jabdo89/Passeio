@@ -1,5 +1,5 @@
 import styled from 'styled-components/native';
-import { Text, Layout } from '@ui-kitten/components';
+import { Text, Layout, Input as DefaultInput } from '@ui-kitten/components';
 
 const Container = styled(Layout)`
   flex-grow: 1;
@@ -13,6 +13,10 @@ const Row = styled(Layout)`
   flex-direction: row;
   padding: 20px 0px;
   align-items: center;
+`;
+
+const Input = styled(DefaultInput)`
+  margin: 5px 0;
 `;
 
 const OptionText = styled(Text)`
@@ -31,4 +35,4 @@ const TextSection = styled.View`
   margin-left: 20px;
 `;
 
-export { Container, Content, Row, OptionText, AvatarSection, TextSection };
+export { Container, Content, Row, OptionText, AvatarSection, TextSection, Input };

@@ -35,10 +35,10 @@ const BottomBar = ({ navigation, state }) => {
         }}
       />
       <BottomNavigationTab
-        title="Enviar"
+        title="Pedir"
         icon={(props) => <Icon {...props} name="arrowhead-up" />}
       />
-      <BottomNavigationTab title="Entregar" icon={(props) => <Icon {...props} name="car" />} />
+      <BottomNavigationTab title="Viajar" icon={(props) => <Icon {...props} name="car" />} />
       <BottomNavigationTab title="Pedidos" icon={(props) => <Icon {...props} name="calendar" />} />
       <BottomNavigationTab title="Perfil" icon={(props) => <Icon {...props} name="person" />} />
     </BottomNavigation>

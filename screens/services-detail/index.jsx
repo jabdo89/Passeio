@@ -1,17 +1,16 @@
+/* eslint-disable react/prop-types */
 import React, { useEffect, useState, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { Alert } from 'react-native';
+import { Alert, View } from 'react-native';
 import firebase from 'firebase';
 import { useNavigation } from '@react-navigation/native';
 import openMap from 'react-native-open-maps';
 import shortid from 'shortid';
 import { Icon, Divider } from '@ui-kitten/components';
-// import { useNavigation } from '@react-navigation/native';
-import TakePhotoModal from '../../templates/take-photo-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@providers/auth';
+import TakePhotoModal from '../../templates/take-photo-modal';
 import {
   Container,
-  Tag,
   Title,
   Row,
   Status,
@@ -19,7 +18,6 @@ import {
   FloatingButton,
   ActionButton2,
 } from './elements';
-import { useAuth } from '@providers/auth';
 import Map from './components/map';
 
 const Done = ({
@@ -27,17 +25,16 @@ const Done = ({
     params: { service: propsService },
   },
 }) => {
-  // const { navigate } = useNavigation();
   const mapRef = useRef({});
   const { top } = useSafeAreaInsets();
   const { user } = useAuth();
   const { navigate } = useNavigation();
-  const [services, setServices] = useState([]);
   const [progress, setProgress] = useState([]);
-  const [loading, setloading] = useState(false);
+  const [loading] = useState(false);
 
   const [isTakePhotoModalOpen, toggleTakePhotoModal] = useState(false);
-  const [evidence, setEvidence] = useState(null);
+  // const [evidence, setEvidence] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Map Center
@@ -101,6 +98,7 @@ const Done = ({
     }
   }, [propsService]);
 
+  // eslint-disable-next-line consistent-return
   const changeStatusLocal = () => {
     const db = firebase.firestore();
     if (propsService.status === 'Pagado') {
@@ -112,7 +110,7 @@ const Done = ({
               .collection('Services')
               .doc(propsService.id)
               .update({ status: 'Recogiendo Paquete' })
-              .then(async (docRef) => {
+              .then(async () => {
                 Alert.alert(
                   'Recogiendo paquete',
                   'Vaya a la dirrecion de comienzo para recoger el paquete',
@@ -134,20 +132,20 @@ const Done = ({
               .collection('Services')
               .doc(propsService.id)
               .update({ status: 'Enviando Paquete' })
-              .then(async (docRef) => {
+              .then(async () => {
                 Alert.alert(
                   'Enviando Paquete',
-                  'Vaya a la dirrecion de destino para entregar el paquete',
+                  'Vaya a la dirreción de destino para entregar el paquete',
                   [{ text: 'OK', onPress: () => navigate('ServiceList') }]
                 );
               })
           }
         >
-          Enviando Paquete
+          Paquete en Camino
         </ActionButton2>
       );
     }
-    if (propsService.status === 'Enviando Paquete') {
+    if (propsService.status === 'Enviando Paquete' && propsService.userID !== user.uid) {
       return (
         <ActionButton2 style={{ left: '5%' }} onPress={() => toggleTakePhotoModal(true)}>
           Confirmar Entrega
@@ -175,7 +173,7 @@ const Done = ({
           db.collection('Services')
             .doc(propsService.id)
             .update({ status: 'Completado' })
-            .then(async (docRef) => {
+            .then(async () => {
               Alert.alert('Entrega Confirmada', 'Gracias por confirmar en Passeio', [
                 { text: 'OK', onPress: () => navigate('ServiceList') },
               ]);
@@ -190,7 +188,19 @@ const Done = ({
 
   return (
     <Container pt={top}>
-      <Title category="h5">Detalle de Servicio</Title>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
+        <Icon
+          onPress={() => navigate('ServiceList')}
+          style={{
+            width: 32,
+            height: 32,
+            marginLeft: 30,
+          }}
+          fill="black"
+          name="arrow-back-outline"
+        />
+        <Title category="h5">Detalle de Servicio</Title>
+      </View>
       <Divider />
       {propsService.type === 'Amazon' ? (
         <>
@@ -215,7 +225,7 @@ const Done = ({
                 fill={progress >= 1 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
-              <Status> Amazon Lo esta enviando </Status>
+              <Status> Paquete Comprado </Status>
             </Row>
             <Row>
               <Icon
@@ -239,12 +249,10 @@ const Done = ({
               />
               <Status> Paquete Entregado </Status>
             </Row>
-            {loading === false ? (
-              <Map ref={mapRef} services={services} center={center} form={propsService} />
-            ) : null}
+            {loading === false ? <Map ref={mapRef} center={center} form={propsService} /> : null}
           </>
 
-          {propsService.status === 'Paquete en Camino' ? (
+          {propsService.status === 'Paquete en Camino' && propsService.userID !== user.uid ? (
             <ActionButton onPress={() => toggleTakePhotoModal(true)}>
               Confirmar Entrega
             </ActionButton>
@@ -253,7 +261,7 @@ const Done = ({
             onPress={() => navigate('Messages')}
             style={{ marginLeft: propsService.userID === user.uid ? 0 : 70 }}
           >
-            {propsService.userID === user.uid ? 'Chat con chofer' : 'Chat'}
+            {propsService.userID === user.uid ? 'Chat con viajero' : 'Chat'}
           </ActionButton2>
           <FloatingButton
             onPress={openNavigationMap}
@@ -295,7 +303,7 @@ const Done = ({
                 fill={progress >= 2 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
-              <Status> Enviando Paquete </Status>
+              <Status> Paquete en Camino </Status>
             </Row>
             <Row>
               <Icon
@@ -308,9 +316,7 @@ const Done = ({
               />
               <Status> Paquete Entregado </Status>
             </Row>
-            {loading === false ? (
-              <Map ref={mapRef} services={services} center={center} form={propsService} />
-            ) : null}
+            {loading === false ? <Map ref={mapRef} center={center} form={propsService} /> : null}
           </>
           {propsService.driverID === user.uid ? changeStatusLocal() : null}
           <ActionButton2
@@ -336,30 +342,6 @@ const Done = ({
       />
     </Container>
   );
-};
-
-Done.defaultProps = {
-  services: null,
-};
-
-Done.propTypes = {
-  services: PropTypes.arrayOf(
-    PropTypes.shape({
-      declaredValue: PropTypes.number,
-      hub: PropTypes.string,
-      startTime: PropTypes.any,
-      startDate: PropTypes.any,
-      deliveries: PropTypes.arrayOf(
-        PropTypes.shape({
-          name: PropTypes.string,
-          email: PropTypes.string,
-          phone: PropTypes.string,
-          address: PropTypes.string,
-          comments: PropTypes.string,
-        })
-      ),
-    })
-  ),
 };
 
 export default Done;

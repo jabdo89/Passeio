@@ -1,16 +1,7 @@
+/* eslint-disable global-require */
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
-import {
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  IndexPath,
-  Text,
-  RadioGroup,
-  Radio,
-  Icon,
-  Spinner,
-} from '@ui-kitten/components';
+import { Button, Input, Text, Icon, Spinner } from '@ui-kitten/components';
 import { View } from 'react-native';
 import firebase from 'firebase';
 import { useAuth } from '@providers/auth';
@@ -19,7 +10,6 @@ import BottomModal from '../../../../templates/bottom-modal';
 import { Title, Row } from './elements';
 
 const BoolModal = ({ visible, onClose }) => {
-  const [value, setValue] = useState({ price: '', weigth: '', category: '' });
   const { user } = useAuth();
 
   const [creditCard, setCreditCard] = useState({
@@ -31,12 +21,9 @@ const BoolModal = ({ visible, onClose }) => {
   });
   const [cardError, setCardError] = useState(null);
   const [checking, setChecking] = useState(false);
-  const [submittedTry, setSubmittedTry] = useState(false);
-  const [isEmailError, setIsEmailError] = useState(true);
 
   const save = async () => {
     const functions = firebase.functions();
-    console.log('chck');
     const pdf = functions.httpsCallable('addPaymentMethod');
     setChecking(true);
     const bit = await pdf({ card: creditCard, customer: user });
@@ -59,7 +46,6 @@ const BoolModal = ({ visible, onClose }) => {
       onClose();
     } else {
       setCardError(bit.data.result.raw.message);
-      console.log(bit.data.result.raw.message);
     }
   };
   const expiryFormatter = (nextValue) => {
@@ -136,11 +122,6 @@ const BoolModal = ({ visible, onClose }) => {
             value={creditCard.name}
             label="Nombre"
             placeholder="Cual es el nombre en la tarjeta?"
-            caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-            captionIcon={(props) =>
-              submittedTry && isEmailError && <Icon {...props} name="alert-circle-outline" />
-            }
-            status={submittedTry && isEmailError && 'warning'}
             accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
             onChangeText={(nextValue) => setCreditCard({ ...creditCard, name: nextValue })}
           />
@@ -152,11 +133,6 @@ const BoolModal = ({ visible, onClose }) => {
               value={creditCard.cvc}
               label="CVC"
               placeholder="Cual es el codigo de seguridad?"
-              caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-              captionIcon={(props) =>
-                submittedTry && isEmailError && <Icon {...props} name="alert-circle-outline" />
-              }
-              status={submittedTry && isEmailError && 'warning'}
               accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
               onChangeText={(nextValue) => setCreditCard({ ...creditCard, cvc: nextValue })}
             />
@@ -167,11 +143,6 @@ const BoolModal = ({ visible, onClose }) => {
               value={creditCard.expiry}
               label="Expiry Date"
               placeholder="Cual es el fecha de caducidad"
-              caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-              captionIcon={(props) =>
-                submittedTry && isEmailError && <Icon {...props} name="alert-circle-outline" />
-              }
-              status={submittedTry && isEmailError && 'warning'}
               accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
               onChangeText={(nextValue) => expiryFormatter(nextValue)}
             />
@@ -182,11 +153,6 @@ const BoolModal = ({ visible, onClose }) => {
             value={creditCard.number}
             label="Numero "
             placeholder="Cual es el numero de la tarjeta?"
-            caption={submittedTry && isEmailError && 'Ingresa un correo electrónico válido'}
-            captionIcon={(props) =>
-              submittedTry && isEmailError && <Icon {...props} name="alert-circle-outline" />
-            }
-            status={submittedTry && isEmailError && 'warning'}
             accessoryLeft={(props) => <Icon {...props} name="layers-outline" />}
             onChangeText={(nextValue) => setCreditCard({ ...creditCard, number: nextValue })}
           />

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert } from 'react-native';
 import firebase from 'firebase';
@@ -21,7 +22,6 @@ const Pay = ({
   const { user } = useAuth();
 
   const [checking, setChecking] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   const [paymentMethodIndex, setPaymentMethodIndex] = useState(new IndexPath(0));
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -60,14 +60,13 @@ const Pay = ({
       db.collection('Services')
         .doc(propsService.id)
         .update({ status: 'Pagado', payed: true })
-        .then(async (docRef) => {
-          setSubmitting(false);
-          Alert.alert('Entrega Pagada', 'Todo listo para comenzar la entrega', [
+        .then(async () => {
+          Alert.alert('Pedido Pagado', 'Pedido realizado. ¡Gracias!', [
             { text: 'OK', onPress: () => navigate('ServiceList') },
           ]);
         });
     } else {
-      console.log(bit);
+      Alert.alert('Error en el Pago', 'Intente con una tarjeta diferente');
     }
   };
 
@@ -91,13 +90,7 @@ const Pay = ({
           >
             {propsService.type === 'Amazon' ? (
               <>
-                <Text>Precio de Productos: ${propsService.total.products} USD</Text>
-                <Text>Envio: ${propsService.total.delivery} USD</Text>
-                <Text style={{ marginBottom: 10 }}>Tarifa: ${propsService.total.fee} USD</Text>
-                <Divider />
-                <Text style={{ marginTop: 10, fontWeight: '700' }}>
-                  Total: ${propsService.total.total} USD
-                </Text>
+                <Text style={{ fontWeight: '700' }}>Total: ${propsService.total.total} USD</Text>
               </>
             ) : (
               <>
@@ -110,7 +103,7 @@ const Pay = ({
             )}
           </View>
           <Text style={{ fontSize: 18, marginBottom: 20, fontWeight: '600' }}>
-            Selecione su metodo de Pago
+            Seleccione su método de pago
           </Text>
           {paymentMethods.length === 0 ? null : (
             <Select
@@ -147,7 +140,7 @@ const Pay = ({
                 appearance="outline"
                 onPress={() => toggleModal(true)}
               >
-                + Nuevo Metodo de Pago
+                + Nuevo método de pago
               </Button>
 
               <SigninButton disabled={false} onPress={() => submit()}>

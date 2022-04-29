@@ -6,19 +6,32 @@ import { useAuth } from '@providers/auth';
 import { StatusBar } from 'expo-status-bar';
 import { TouchableOpacity, Alert } from 'react-native';
 import { Avatar, Text, Divider, Icon, Button, Card, Modal, useTheme } from '@ui-kitten/components';
-import { Container, Content, Row, OptionText, AvatarSection, TextSection } from './elements';
+import { Container, Content, Row, OptionText, AvatarSection, TextSection, Input } from './elements';
 
 const Options = () => {
   const { top } = useSafeAreaInsets();
   const [exitModal, toggleExitModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [changingPhone, setChangingPhone] = useState(false);
   const [withdraw, setWithdraw] = useState(false);
   const theme = useTheme();
 
   const { user } = useAuth();
 
+  const submitPhone = async () => {
+    const db = firebase.firestore();
+    db.collection('Users')
+      .doc(user.uid)
+      .update({
+        phone,
+      })
+      .then(() => {
+        setChangingPhone(false);
+        Alert.alert('Cambio de Telefono', 'Cambiaste tu telefono con exito');
+      });
+  };
+
   const retirar = async () => {
-    setSubmitting(true);
     const db = firebase.firestore();
     db.collection('Withdraws')
       .add({
@@ -27,7 +40,6 @@ const Options = () => {
         date: new Date(),
       })
       .then(() => {
-        setSubmitting(false);
         setWithdraw(true);
         db.collection('Users').doc(user.uid).update({
           retirando: true,
@@ -64,6 +76,7 @@ const Options = () => {
           startingValue={user.rating ? user.rating : 5}
           imageSize={50}
           showRating
+          readonly
         />
         <Card
           style={{
@@ -81,6 +94,51 @@ const Options = () => {
             </Button>
           </Row>
         </Card>
+        {!changingPhone && (
+          <>
+            <Button
+              style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
+              status="primary"
+              appearance="outline"
+              onPress={() => setChangingPhone(true)}
+            >
+              Cambiar Telefono
+            </Button>
+            <Button
+              style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
+              status="primary"
+              appearance="outline"
+              // eslint-disable-next-line no-console
+              onPress={() => console.log('telefono')}
+            >
+              Soporte
+            </Button>
+          </>
+        )}
+        {changingPhone && (
+          <>
+            <Input
+              size="large"
+              autoCapitalize="none"
+              value={phone}
+              style={{ marginTop: 30 }}
+              label="Nuevo Telefono"
+              keyboardType="numeric"
+              placeholder="Telefono"
+              accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
+              onChangeText={(nextValue) => setPhone(nextValue)}
+            />
+            <Button
+              style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
+              status="primary"
+              appearance="ghost"
+              onPress={() => submitPhone()}
+            >
+              Cambiar Telefono
+            </Button>
+          </>
+        )}
+
         <Content>
           <TouchableOpacity onPress={() => toggleExitModal(true)}>
             <Row style={{ marginTop: 40 }}>

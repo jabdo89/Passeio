@@ -1,14 +1,13 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
-import { Text, Avatar } from '@ui-kitten/components';
-import { Image, StyleSheet, View } from 'react-native';
-import { Card, Tag, TagsContainer, Icon, WithIcon } from './elements';
+import { Image, View } from 'react-native';
 
-const CarouselItem = ({ item, theme }) => {
+const CarouselItem = ({ item }) => {
   return (
     <View style={{ height: 300, margin: 0, width: 200, marginLeft: 100 }}>
       <Image
         style={{
-          width: '100%',
+          width: '80%',
           marginTop: 5,
           height: 120,
           borderRadius: 20,
@@ -18,7 +17,9 @@ const CarouselItem = ({ item, theme }) => {
           resizeMode: 'contain',
         }}
         source={{
-          uri: item.imageUrl,
+          uri: item.imageUrl
+            ? item.imageUrl
+            : 'https://upload.wikimedia.org/wikipedia/commons/1/14/Product_sample_icon_picture.png',
         }}
       />
     </View>
