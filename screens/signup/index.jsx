@@ -17,6 +17,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    phone: '',
   });
   const [submittedTry, setSubmittedTry] = useState(false);
   const [isEmailError, setIsEmailError] = useState(true);
@@ -70,6 +71,7 @@ const Signup = () => {
         uid: user.uid,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
+        phone: newUser.phone,
         credit: 0,
         rating: 5,
       });
@@ -130,6 +132,21 @@ const Signup = () => {
           }
           accessoryLeft={(props) => <Icon {...props} name="menu-outline" />}
           onChangeText={(nextValue) => setForm({ ...form, lastName: nextValue })}
+        />
+        <Input
+          size="large"
+          autoCapitalize="words"
+          autoCompleteType="name"
+          value={form.phone}
+          label="Telefono"
+          placeholder="Ingresa tu Telefono"
+          caption={submittedTry && form.phone === '' && 'Ingresa un telefono válido'}
+          status={submittedTry && form.phone === '' && 'warning'}
+          captionIcon={(props) =>
+            submittedTry && form.phone === '' && <Icon {...props} name="alert-circle-outline" />
+          }
+          accessoryLeft={(props) => <Icon {...props} name="menu-outline" />}
+          onChangeText={(nextValue) => setForm({ ...form, phone: nextValue })}
         />
         <Input
           size="large"

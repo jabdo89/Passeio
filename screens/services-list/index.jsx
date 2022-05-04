@@ -131,6 +131,7 @@ const Done = () => {
                       style={{
                         fontWeight: '500',
                         color: '#FFD700',
+                        width: 120,
                       }}
                     >
                       {item.type === 'Amazon' ? 'United States' : item.startPoint.country}
@@ -220,14 +221,12 @@ const Done = () => {
                             style={{
                               color: 'black',
                               fontWeight: '900',
-                              margin: 10,
+                              margin: 0,
                               width: 140,
                               alignSelf: 'center',
                               textAlign: 'center',
                             }}
-                          >
-                            Buscando Chofer
-                          </Text>
+                          />
                         ) : null}
                         {item.status === 'Chofer Encontrado' ? (
                           <Button
@@ -236,7 +235,7 @@ const Done = () => {
                               height: 50,
                               marginLeft: 'auto',
                               marginRight: 'auto',
-                              marginTop: 20,
+                              marginTop: 0,
                               borderRadius: 50,
                               backgroundColor: '#FFD700',
                               borderColor: 'black',
@@ -257,7 +256,7 @@ const Done = () => {
                               height: 50,
                               marginLeft: 'auto',
                               marginRight: 'auto',
-                              marginTop: 20,
+                              marginTop: 0,
                               borderRadius: 50,
                               backgroundColor: 'transparent',
                               borderColor: '#FFD700',
@@ -367,7 +366,7 @@ const Done = () => {
                               height: 50,
                               marginLeft: 'auto',
                               marginRight: 'auto',
-                              marginTop: 20,
+                              marginTop: 0,
                               borderRadius: 50,
                               backgroundColor: 'transparent',
                               borderColor: '#FFD700',
@@ -425,6 +424,7 @@ const Done = () => {
                     <Text
                       style={{
                         fontWeight: '500',
+                        width: 120,
                       }}
                     >
                       {item.type === 'Amazon' ? 'United States' : item.startPoint.country}
@@ -613,7 +613,7 @@ const Done = () => {
                               height: 50,
                               marginLeft: 'auto',
                               marginRight: 'auto',
-                              marginTop: 20,
+                              marginTop: 0,
                               borderRadius: 50,
                               backgroundColor: 'transparent',
                               borderColor: '#FFD700',

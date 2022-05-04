@@ -5,10 +5,10 @@ import { View, Image } from 'react-native';
 import shortid from 'shortid';
 import firebase from 'firebase';
 import PropTypes from 'prop-types';
-import { Text, Icon, List, ListItem, Divider, Tab, TabBar, Button } from '@ui-kitten/components';
+import { Text, Icon, List, Divider, Tab, TabBar } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Container, Tag, Title } from './elements';
+import { Container, Title } from './elements';
 import CarouselItem from './components/carousel-item';
 
 // Uncomment for onPress functionality
@@ -17,6 +17,7 @@ const Done = () => {
   const { navigate } = useNavigation();
   const { top } = useSafeAreaInsets();
   const [services, setServices] = useState([]);
+  const [servicesEntrega, setServicesEntrega] = useState([]);
   const [loading, setloading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -25,17 +26,23 @@ const Done = () => {
       const db = firebase.firestore();
       const user = firebase.auth().currentUser;
       db.collection('Services').onSnapshot((querySnapshot) => {
-        const servicios = [];
+        let envios = [];
+        let entregas = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.status === 'Completado') {
-            if (data.driverID === user.uid || data.userID === user.uid) {
-              servicios.push(doc.data());
+            if (data.userID === user.uid) {
+              envios.push(doc.data());
+            }
+            if (data.driverID === user.uid) {
+              entregas.push(doc.data());
             }
           }
         });
-        // info = info.slice().sort((a, b) => b.startDate - a.startDate);
-        setServices(servicios);
+        envios = envios.slice().sort((a, b) => b.dateCreated.seconds - a.dateCreated.seconds);
+        entregas = entregas.slice().sort((a, b) => b.dateCreated.seconds - a.dateCreated.seconds);
+        setServices(envios);
+        setServicesEntrega(entregas);
         setloading(true);
       });
     };
@@ -64,9 +71,16 @@ const Done = () => {
         <Title category="h5">Servicios Completados</Title>
       </View>
       <Divider />
-
+      <TabBar
+        style={{ paddingTop: 20 }}
+        selectedIndex={selectedIndex}
+        onSelect={(index) => setSelectedIndex(index)}
+      >
+        <Tab title="Pedidos" icon={EnviarIcon} />
+        <Tab title="Viajes" icon={EntregarIcon} />
+      </TabBar>
       <List
-        data={services}
+        data={selectedIndex === 0 ? services : servicesEntrega}
         style={{ maxHeight: '77%', backgroundColor: 'white' }}
         renderItem={({ item }) => (
           <View
