@@ -1,3 +1,4 @@
+/* eslint-disable radix */
 const functions = require('firebase-functions');
 const axios = require('axios');
 
@@ -5,7 +6,7 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
-const { searchAmazon, AmazonSearchResult } = require('unofficial-amazon-search');
+const { searchAmazon } = require('unofficial-amazon-search');
 
 const { Stripe } = require('stripe');
 
@@ -135,7 +136,7 @@ exports.createStripeCustomer = functions.auth.user().onCreate(async (user) => {
 });
 
 exports.addPaymentMethod = functions.https.onCall((data) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     functions.logger.log('error', parseInt(data.card.expiry.substring(0, 2)));
     stripe.paymentMethods
       .create({
@@ -175,7 +176,7 @@ exports.addPaymentMethod = functions.https.onCall((data) => {
 });
 
 exports.chargeStripe = functions.https.onCall((data) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     stripe.paymentIntents
       .create({
         // eslint-disable-next-line radix
