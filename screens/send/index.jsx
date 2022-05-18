@@ -121,7 +121,7 @@ const Send = ({ route }) => {
   }, [form.value]);
 
   useEffect(() => {
-    setIsWeightError(form.weight <= 0.5);
+    setIsWeightError(form.weight < 0.5);
   }, [form.weight]);
 
   useEffect(() => {
@@ -190,7 +190,7 @@ const Send = ({ route }) => {
       }
       num += parseFloat(cart[i].prices[0].price);
     }
-    return num.toFixed(2);
+    return (num * 1.09).toFixed(2);
   };
   const getTotalAmazonDelivery = () => {
     let num = 0;
@@ -200,9 +200,9 @@ const Send = ({ route }) => {
         return num;
       }
       if (cart[i].category.name === 'Otro') {
-        num += cart[i].weigth * 6.5 * 1.15;
+        num += cart[i].weigth * 6.5 * 1.15 * 1.13 * 1.03;
       } else {
-        num += cart[i].category.value;
+        num += cart[i].category.value * 1.13 * 1.03;
       }
     }
     return num.toFixed(2);
@@ -290,6 +290,7 @@ const Send = ({ route }) => {
   };
 
   const [amazonDestination, setAmazonDestination] = useState('');
+  const [amazonDate, setAmazonDate] = useState(new Date());
 
   const submitAmazon = async () => {
     setSubmitting(true);
@@ -307,6 +308,7 @@ const Send = ({ route }) => {
           total: getTotalAmazon(),
         },
         payed: false,
+        arrivalDate: amazonDate,
         senderName: `${user.firstName} ${user.lastName}`,
         products: cart,
         userID: user.uid,
@@ -736,7 +738,7 @@ const Send = ({ route }) => {
                     disabled={submitting || isImageError}
                     onPress={submit}
                   >
-                    ¡Confirmar pedido,es gratis!
+                    ¡Confirma pedido,es gratis!
                   </SigninButton>
                   <Button appearance="ghost" onPress={() => back()}>
                     Atrás, cambiar información
@@ -901,16 +903,22 @@ const Send = ({ route }) => {
 
                           // onSnapToItem={setSelected}
                         />
-                        <Button style={{ width: 150 }} onPress={addAnotherProduct}>
-                          <Text style={{ fontSize: 9 }}>Agregar otro producto</Text>
+                        <Button style={{ width: '60%' }} onPress={addAnotherProduct}>
+                          <Text style={{ fontSize: 10 }}>Agregar Otro Producto</Text>
                         </Button>
                       </View>
-                      <Text style={{ color: 'red', marginTop: 20 }}>
+                      <Text style={{ color: 'red', marginTop: 20, marginBottom: 20 }}>
                         {getTotalAmazonPrice() === 'Pendiente' ||
                         getTotalAmazonDelivery() === 'Pendiente'
                           ? 'Dale click a “Pendiente” para completarlo'
                           : null}
                       </Text>
+                      <Datepicker
+                        label="¿Qué fecha quieres que llegue tu paquete?"
+                        date={amazonDate}
+                        filter={(date) => new Date() < date}
+                        onSelect={(nextDate) => setAmazonDate(nextDate)}
+                      />
                       <View
                         style={{
                           width: '100%',
@@ -922,16 +930,13 @@ const Send = ({ route }) => {
                           padding: 20,
                         }}
                       >
-                        <Text>Precio de Productos: ${getTotalAmazonPrice()}</Text>
-                        <Text>Envio: ${getTotalAmazonDelivery()}</Text>
-                        <Text style={{ marginBottom: 10 }}>Tarifa: ${getFee()}</Text>
-                        <Divider />
-                        <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                        <Text style={{ fontWeight: '700' }}>
                           Total: $
                           {getTotalAmazonPrice() === 'Pendiente' ||
                           getTotalAmazonDelivery() === 'Pendiente'
                             ? 'Pendiente'
                             : getTotalAmazon()}
+                          <Text style={{ fontWeight: '400', fontSize: 7 }}>USD</Text>
                         </Text>
                       </View>
 
@@ -1167,8 +1172,8 @@ const Send = ({ route }) => {
 
                           // onSnapToItem={setSelected}
                         />
-                        <Button style={{ width: 150 }} onPress={addAnotherProduct}>
-                          <Text style={{ fontSize: 9 }}>Agregar otro producto</Text>
+                        <Button style={{ width: '60%' }} onPress={addAnotherProduct}>
+                          <Text style={{ fontSize: 10 }}>Agregar Otro Producto</Text>
                         </Button>
                       </View>
                       <Text style={{ color: 'red', marginTop: 20 }}>
@@ -1177,6 +1182,12 @@ const Send = ({ route }) => {
                           ? 'Dale click a “Pendiente” para completarlo'
                           : null}
                       </Text>
+                      <Datepicker
+                        label="¿Qué fecha quieres que llegue tu paquete?"
+                        date={amazonDate}
+                        filter={(date) => new Date() < date}
+                        onSelect={(nextDate) => setAmazonDate(nextDate)}
+                      />
                       <View
                         style={{
                           width: '100%',
@@ -1188,16 +1199,13 @@ const Send = ({ route }) => {
                           padding: 20,
                         }}
                       >
-                        <Text>Precio de Productos: ${getTotalAmazonPrice()}</Text>
-                        <Text>Envio: ${getTotalAmazonDelivery()}</Text>
-                        <Text style={{ marginBottom: 10 }}>Tarifa: ${getFee()}</Text>
-                        <Divider />
                         <Text style={{ marginTop: 10, fontWeight: '700' }}>
                           Total: $
                           {getTotalAmazonPrice() === 'Pendiente' ||
                           getTotalAmazonDelivery() === 'Pendiente'
                             ? 'Pendiente'
                             : getTotalAmazon()}
+                          <Text style={{ fontWeight: '400', fontSize: 7 }}>USD</Text>
                         </Text>
                       </View>
 

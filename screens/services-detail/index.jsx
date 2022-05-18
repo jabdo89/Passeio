@@ -5,19 +5,11 @@ import firebase from 'firebase';
 import { useNavigation } from '@react-navigation/native';
 import openMap from 'react-native-open-maps';
 import shortid from 'shortid';
-import { Icon, Divider } from '@ui-kitten/components';
+import { Icon, Divider, Card, Text, Button } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@providers/auth';
 import TakePhotoModal from '../../templates/take-photo-modal';
-import {
-  Container,
-  Title,
-  Row,
-  Status,
-  ActionButton,
-  FloatingButton,
-  ActionButton2,
-} from './elements';
+import { Container, Title, Row, Status, ActionButton, ActionButton2 } from './elements';
 import Map from './components/map';
 
 const Done = ({
@@ -51,11 +43,11 @@ const Done = ({
     });
   };
 
-  const openNavigationMap = () => {
+  const openNavigationMap = (info) => {
     let end;
 
     // Add func to pick up package or deliver Package
-    if (propsService.status === 'Enviando Paquete') {
+    if (info === 'End') {
       end = `${propsService.destination.location.lat},${propsService.destination.location.lng}`;
     } else {
       end = `${propsService.startPoint.location.lat},${propsService.startPoint.location.lng}`;
@@ -101,7 +93,7 @@ const Done = ({
   // eslint-disable-next-line consistent-return
   const changeStatusLocal = () => {
     const db = firebase.firestore();
-    if (propsService.status === 'Pagado') {
+    if (propsService.status === 'Pagado' && propsService.driverID === user.uid) {
       return (
         <ActionButton2
           style={{ left: '5%' }}
@@ -113,7 +105,7 @@ const Done = ({
               .then(async () => {
                 Alert.alert(
                   'Recogiendo paquete',
-                  'Vaya a la dirrecion de comienzo para recoger el paquete',
+                  'Vaya a la dirección  de comienzo para recoger el paquete',
                   [{ text: 'OK', onPress: () => navigate('ServiceList') }]
                 );
               })
@@ -123,7 +115,7 @@ const Done = ({
         </ActionButton2>
       );
     }
-    if (propsService.status === 'Recogiendo Paquete') {
+    if (propsService.status === 'Recogiendo Paquete' && propsService.driverID === user.uid) {
       return (
         <ActionButton2
           style={{ left: '5%' }}
@@ -135,7 +127,7 @@ const Done = ({
               .then(async () => {
                 Alert.alert(
                   'Enviando Paquete',
-                  'Vaya a la dirreción de destino para entregar el paquete',
+                  'Vaya a la dirección  de destino para entregar el paquete',
                   [{ text: 'OK', onPress: () => navigate('ServiceList') }]
                 );
               })
@@ -145,7 +137,7 @@ const Done = ({
         </ActionButton2>
       );
     }
-    if (propsService.status === 'Enviando Paquete' && propsService.userID !== user.uid) {
+    if (propsService.status === 'Enviando Paquete' && propsService.driverID === user.uid) {
       return (
         <ActionButton2 style={{ left: '5%' }} onPress={() => toggleTakePhotoModal(true)}>
           Confirmar Entrega
@@ -172,7 +164,7 @@ const Done = ({
         () => {
           db.collection('Services')
             .doc(propsService.id)
-            .update({ status: 'Completado' })
+            .update({ status: 'Completado', completedDate: new Date() })
             .then(async () => {
               Alert.alert('Entrega Confirmada', 'Gracias por confirmar en Passeio', [
                 { text: 'OK', onPress: () => navigate('ServiceList') },
@@ -185,7 +177,6 @@ const Done = ({
       Alert.alert(err.message);
     }
   };
-
   return (
     <Container pt={top}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
@@ -204,45 +195,73 @@ const Done = ({
       <Divider />
       {propsService.type === 'Amazon' ? (
         <>
+          <Card style={{ width: '80%', marginRight: 'auto', marginLeft: 'auto' }}>
+            <View
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                flexDirection: 'row',
+                width: '100%',
+              }}
+            >
+              <View style={{ width: '50%', maxHeight: 80, overflow: 'hidden' }}>
+                <Text style={{ fontWeight: '800', fontSize: 10 }}>Dirección Destino </Text>
+                <Text>{propsService.destination.address} </Text>
+              </View>
+              <Button
+                style={{ width: 50, height: 50, borderRadius: 50 }}
+                onPress={() => openNavigationMap('End')}
+                status="success"
+              >
+                <Icon
+                  height={30}
+                  width={30}
+                  style={{ right: 10 }}
+                  fill="white"
+                  name="navigation-outline"
+                />
+              </Button>
+            </View>
+          </Card>
           <>
             <Row>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 0 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Orden Confirmada </Status>
             </Row>
-            <Row>
+            <Row style={{ bottom: 20 }}>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 1 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Paquete Comprado </Status>
             </Row>
-            <Row>
+            <Row style={{ bottom: 40 }}>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 2 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Paquete en Camino </Status>
             </Row>
-            <Row>
+            <Row style={{ bottom: 60 }}>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 3 ? '#7FFF00' : '#2d3436'}
                 name="flag"
@@ -263,60 +282,117 @@ const Done = ({
           >
             {propsService.userID === user.uid ? 'Chat con viajero' : 'Chat'}
           </ActionButton2>
-          <FloatingButton
-            onPress={openNavigationMap}
-            status="success"
-            accessoryLeft={(props) => <Icon {...props} name="navigation-outline" />}
-          />
         </>
       ) : (
         <>
+          <View
+            style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+          >
+            <Card style={{ width: '80%', marginRight: 'auto', marginLeft: 'auto' }}>
+              <View
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  flexDirection: 'row',
+                  width: '100%',
+                }}
+              >
+                <View style={{ width: '70%', maxHeight: 80, overflow: 'hidden' }}>
+                  <Text style={{ fontWeight: '800', fontSize: 10 }}>Dirección Comienzo </Text>
+                  <Text>{propsService.startPoint.address} </Text>
+                </View>
+                <Button
+                  style={{ width: 50, height: 50, borderRadius: 50 }}
+                  onPress={() => openNavigationMap('Start')}
+                  status="success"
+                >
+                  <Icon
+                    height={30}
+                    width={30}
+                    style={{ right: 10 }}
+                    fill="white"
+                    name="navigation-outline"
+                  />
+                </Button>
+              </View>
+            </Card>
+            <Card style={{ width: '80%', marginRight: 'auto', marginLeft: 'auto' }}>
+              <View
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  flexDirection: 'row',
+                  width: '100%',
+                }}
+              >
+                <View style={{ width: '70%', maxHeight: 80, overflow: 'hidden' }}>
+                  <Text style={{ fontWeight: '800', fontSize: 10 }}>Dirección Destino </Text>
+                  <Text>{propsService.destination.address} </Text>
+                </View>
+                <Button
+                  style={{ width: 50, height: 50, borderRadius: 50 }}
+                  onPress={() => openNavigationMap('End')}
+                  status="success"
+                >
+                  <Icon
+                    height={30}
+                    width={30}
+                    style={{ right: 10 }}
+                    fill="white"
+                    name="navigation-outline"
+                  />
+                </Button>
+              </View>
+            </Card>
+          </View>
           <>
             <Row>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 0 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Orden Confirmada </Status>
             </Row>
-            <Row>
+            <Row style={{ bottom: 20 }}>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 1 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Recogiendo Paquete </Status>
             </Row>
-            <Row>
+            <Row style={{ bottom: 40 }}>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 2 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Paquete en Camino </Status>
             </Row>
-            <Row>
+            <Row style={{ bottom: 60 }}>
               <Icon
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 20,
+                  height: 20,
                 }}
                 fill={progress >= 3 ? '#7FFF00' : '#2d3436'}
                 name="flag"
               />
               <Status> Paquete Entregado </Status>
             </Row>
-            {loading === false ? <Map ref={mapRef} center={center} form={propsService} /> : null}
+            <View style={{ bottom: 60 }}>
+              {loading === false ? <Map ref={mapRef} center={center} form={propsService} /> : null}
+            </View>
           </>
           {propsService.driverID === user.uid ? changeStatusLocal() : null}
           <ActionButton2
@@ -325,13 +401,6 @@ const Done = ({
           >
             Chat{propsService.driverID === user.uid ? null : ' con Chofer'}
           </ActionButton2>
-          <FloatingButton
-            onPress={openNavigationMap}
-            status="success"
-            accessoryLeft={(props) => <Icon {...props} name="navigation-outline" />}
-          >
-            Dirrecion {propsService.status === 'Enviando Paquete' ? 'Destino' : 'Comienzo'}
-          </FloatingButton>
         </>
       )}
       <TakePhotoModal

@@ -1,12 +1,17 @@
 /* eslint-disable react/prop-types */
-import React, { useState } from 'react';
-import { Button, Input, Text, RadioGroup, Radio } from '@ui-kitten/components';
+import React, { useState, useEffect } from 'react';
+import { Button, Input, Text, RadioGroup, Radio, Icon } from '@ui-kitten/components';
 import BottomModal from '../../../../templates/bottom-modal';
 import { Title } from './elements';
 
 const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) => {
   const [value, setValue] = useState({ price: '', weigth: '', category: '' });
   const [categoriesIndex, setCategoriesIndex] = useState(0);
+  const [isWeigthError, setIsWeigthError] = useState(false);
+
+  useEffect(() => {
+    setIsWeigthError(parseFloat(value.weigth) < 0.5);
+  }, [value.weigth]);
 
   const categories = [
     { name: 'Otro', value: 0 },
@@ -47,7 +52,8 @@ const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) =>
       onClose={onClose}
       style={{ minHeight: 400, backgroundColor: 'red' }}
     >
-      <Title category="h6">Llene la Informacion Faltante</Title>
+      <Title category="h6">Llena la información faltante</Title>
+      <Text style={{ fontSize: 10 }}>(Obligatorio llenar todos los campos)</Text>
       {item.item && !item.item.weigth ? (
         <Input
           keyboardType="numeric"
@@ -56,6 +62,9 @@ const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) =>
           onChangeText={(nextValue) => setValue({ ...value, weigth: nextValue })}
           value={value.weigth}
           placeholder="Peso del producto (Libras)"
+          status={isWeigthError && 'warning'}
+          caption={isWeigthError && 'Peso no puede ser menor a 0.5'}
+          captionIcon={(props) => isWeigthError && <Icon {...props} name="alert-circle-outline" />}
         />
       ) : null}
       {item.item && !item.item.prices[0] ? (
@@ -70,7 +79,7 @@ const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) =>
       ) : null}
       <>
         <Text style={{ marginTop: 5, marginBottom: 10, fontWeight: '700' }}>
-          Selecione la Categoria del Producto
+          Seleccione la categoría del producto
         </Text>
         <RadioGroup
           size="large"
@@ -83,7 +92,7 @@ const BoolModal = ({ visible, onClose, item, cart, setCart, removeFromCart }) =>
           })}
         </RadioGroup>
       </>
-      <Button onPress={save} disabled={!item?.item?.weigth && !value.weigth}>
+      <Button onPress={save} disabled={(!item?.item?.weigth && !value.weigth) || isWeigthError}>
         Guardar
       </Button>
       <Button appearance="ghost" style={{ marginTop: 10 }} onPress={remove}>

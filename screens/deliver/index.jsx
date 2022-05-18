@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import firebase from 'firebase';
 import 'firebase/firestore';
-import { StyleSheet, View, Alert, Image } from 'react-native';
+import 'moment/locale/es';
+import { StyleSheet, View, Alert, Image, Linking } from 'react-native';
 import moment from 'moment';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,6 +113,8 @@ const Deliver = () => {
       maxHeight: '60%',
     },
   });
+
+  moment.locale('es');
 
   // Map Center
   const center = () => {
@@ -441,7 +444,7 @@ const Deliver = () => {
                   >
                     <Text style={{ fontSize: 15, textAlign: 'center' }}>
                       Por el momento no hay viajes para esta{' '}
-                      <Text style={{ fontWeight: '700' }}>Ubicacion</Text>o{' '}
+                      <Text style={{ fontWeight: '700' }}>Ubicación</Text> o{' '}
                       <Text style={{ fontWeight: '700' }}>Fecha</Text>.
                     </Text>
                   </View>
@@ -487,11 +490,16 @@ const Deliver = () => {
                                 width: '70%',
                               }}
                             >
-                              <Text style={{ width: 120, fontWeight: 'bold' }}>
-                                {moment(item.date.seconds * 1000)
-                                  .locale('es')
-                                  .format('ddd, D MMM')}
-                              </Text>
+                              <View>
+                                <Text style={{ width: 140 }}>
+                                  {moment(item.date.seconds * 1000)
+                                    .locale('es')
+                                    .format('ddd, D MMM')}
+                                </Text>
+                                <Text style={{ width: 200, fontWeight: 'bold' }}>
+                                  {item.startPoint.address.substring(0, 40)}
+                                </Text>
+                              </View>
                               <View
                                 style={{
                                   height: 40,
@@ -506,9 +514,6 @@ const Deliver = () => {
                               </View>
                             </View>
 
-                            <Text style={{ width: 200, fontWeight: 'bold' }}>
-                              {item.startPoint.address.substring(0, 40)}
-                            </Text>
                             <Text>Cantidad: {item.quantity}</Text>
                             <Text>Peso: {item.weight} libras</Text>
                           </View>
@@ -713,8 +718,8 @@ const Deliver = () => {
                     }}
                   >
                     <Text style={{ fontSize: 15, textAlign: 'center' }}>
-                      Por el momento no hay viajes para esta
-                      <Text style={{ fontWeight: '700' }}>Ubicacion</Text> o
+                      Por el momento no hay viajes para esta{' '}
+                      <Text style={{ fontWeight: '700' }}>Ubicación</Text> o{' '}
                       <Text style={{ fontWeight: '700' }}>Fecha</Text>.
                     </Text>
                   </View>
@@ -749,13 +754,23 @@ const Deliver = () => {
                                 ${parseFloat(item.total.delivery * 0.66).toFixed(2)}
                               </Text>
                             </Text>
-                            <Button
-                              onPress={() => goToPagare(item)}
-                              style={{ margin: 10, left: -30 }}
-                              size="small"
-                            >
-                              Entregar
-                            </Button>
+                            {user.aproved ? (
+                              <Button
+                                onPress={() => goToPagare(item)}
+                                style={{ margin: 10, left: -30, backgroundColor: '#28282B' }}
+                              >
+                                Entregar
+                              </Button>
+                            ) : (
+                              <Button
+                                onPress={() => {
+                                  Linking.openURL('https://www.passeioapp.com/contact-3?lang=en');
+                                }}
+                                style={{ margin: 10, left: 0, backgroundColor: '#28282B' }}
+                              >
+                                Solicita Aprobación
+                              </Button>
+                            )}
                           </Row>
                         )}
                       >
@@ -785,21 +800,15 @@ const Deliver = () => {
                 </View>
                 <View
                   style={{
-                    width: 350,
-                    heigth: 400,
                     borderRadius: 20,
                     borderColor: 'black',
                     borderWidth: 0.5,
                     padding: 20,
                   }}
                 >
-                  <Text style={{ marginBottom: 10 }}>
-                    Valor de Productos: ${selected.total.products}
-                  </Text>
-
-                  <Divider />
-                  <Text style={{ marginTop: 10, fontWeight: '700' }}>
+                  <Text style={{ fontWeight: '700' }}>
                     Recompensa: ${parseFloat(selected.total.delivery * 0.66).toFixed(2)}
+                    <Text style={{ fontSize: 9 }}>USD </Text>
                   </Text>
                 </View>
 

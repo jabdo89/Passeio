@@ -19,7 +19,6 @@ const Login = () => {
   const [submittedTry, setSubmittedTry] = useState(false);
   const [isEmailError, setIsEmailError] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [loginError, setLoginError] = useState('');
   const [noUser, setNoUser] = useState(false);
   const [isPasswordError, setIsPasswordError] = useState(true);
 
@@ -41,7 +40,6 @@ const Login = () => {
     try {
       await auth().signInWithEmailAndPassword(form.email, form.password);
     } catch (err) {
-      // setLoginError(err.message);
       Alert.alert(err.message);
       setNoUser(true);
       setSubmitting(false);
@@ -93,19 +91,6 @@ const Login = () => {
               secureTextEntry={secureTextEntry}
               onChangeText={(nextValue) => setForm({ ...form, password: nextValue })}
             />
-            {loginError !== '' && (
-              <Text
-                style={{
-                  color: 'red',
-                  marginLeft: 'auto',
-                  marginRight: 'auto',
-
-                  padding: 10,
-                }}
-              >
-                {loginError}
-              </Text>
-            )}
             <Button
               onPress={() => navigate('RecoverPassword')}
               appearance="ghost"

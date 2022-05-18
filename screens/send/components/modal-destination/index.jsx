@@ -8,7 +8,7 @@ import { Title } from './elements';
 
 const BoolModal = ({ visible, onClose, setDestination, submit }) => {
   const ref = useRef();
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState(null);
   const save = () => {
     submit();
     onClose();
@@ -26,9 +26,9 @@ const BoolModal = ({ visible, onClose, setDestination, submit }) => {
 
   return (
     <BottomModal visible={visible} onClose={onClose} style={{ minHeight: 700, display: 'flex' }}>
-      <View style={{ minHeight: 300 }}>
-        <Title category="h6">País de destino: </Title>
-        <Text>{country}</Text>
+      <View style={{ minHeight: 400 }}>
+        <Title category="h6">País de destino: {country}</Title>
+
         <GooglePlacesAutocomplete
           ref={ref}
           placeholder="Buscar país..."
@@ -62,10 +62,21 @@ const BoolModal = ({ visible, onClose, setDestination, submit }) => {
             language: 'en',
           }}
         />
-
-        <Button onPress={save} disabled={country === ''}>
-          ¡Confirmar pedido, es gratis!”
+        {country === 'El Salvador' && (
+          <Text style={{ marginBottom: 10, textAlign: 'center', fontSize: 12 }}>
+            Recuerda por ahora todas nuestras entregas se hacen en nuestra tienda en
+            <Text style={{ fontWeight: '600', fontSize: 14 }}> Santa Tecla, El Salvador </Text>
+          </Text>
+        )}
+        <Button
+          onPress={save}
+          disabled={country === ''}
+          style={{ textAlign: 'center' }}
+          size="large"
+        >
+          Confirma tu pedido
         </Button>
+        <Text style={{ marginRight: 'auto', marginLeft: 'auto' }}>Recuerda que es ¡Gratis!</Text>
       </View>
     </BottomModal>
   );

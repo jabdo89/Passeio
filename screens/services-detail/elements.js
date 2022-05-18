@@ -47,7 +47,7 @@ const ActionButton = styled(Button)`
 const ActionButton2 = styled(Button)`
   position: absolute;
   margin-right: 10%;
-  top: 90%;
+  top: 55%;
   left: 52%;
   margin-right: 60px;
   border-radius: 999999px;
@@ -57,7 +57,7 @@ const ActionButton2 = styled(Button)`
 const FloatingButton = styled(Button)`
   position: absolute;
   right: 20px;
-  bottom: 55%;
+  bottom: 0%;
   border-radius: 999999px;
   height: 55px;
 `;

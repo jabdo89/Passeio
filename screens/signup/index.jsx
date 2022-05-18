@@ -73,6 +73,7 @@ const Signup = () => {
         lastName: newUser.lastName,
         phone: newUser.phone,
         credit: 0,
+        aproved: false,
         rating: 5,
       });
     } else {

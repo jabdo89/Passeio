@@ -247,7 +247,7 @@ const Home = () => {
                       textAlign: 'center',
                     }}
                   >
-                    Aprovecha tus viajes y gana dinero extra por traer productos
+                    Prueba Viajar
                   </Text>
                   <Text
                     style={{
@@ -262,7 +262,7 @@ const Home = () => {
                       marginRight: 'auto',
                     }}
                   >
-                    Gana dinero extra en tus viajes, aprovecha no pierdas la oportunidad
+                    Aprovecha tus viajes y gana dinero extra por traer productos
                   </Text>
                   <Button
                     style={{

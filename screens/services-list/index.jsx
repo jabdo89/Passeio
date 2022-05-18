@@ -26,6 +26,7 @@ const Done = () => {
     const query = () => {
       const db = firebase.firestore();
       const user = firebase.auth().currentUser;
+      setloading(true);
       db.collection('Services').onSnapshot((querySnapshot) => {
         let envios = [];
         let entregas = [];
@@ -44,14 +45,11 @@ const Done = () => {
         entregas = entregas.slice().sort((a, b) => b.dateCreated.seconds - a.dateCreated.seconds);
         setServices(envios);
         setServicesEntrega(entregas);
-        setloading(true);
+        setloading(false);
       });
     };
     query();
   }, []);
-  if (!loading) {
-    return null;
-  }
 
   const deleteService = (id) => {
     const db = firebase.firestore();
@@ -97,6 +95,37 @@ const Done = () => {
       </TabBar>
       {selectedIndex === 0 ? (
         <>
+          {services.length === 0 && !loading && (
+            <>
+              <Text
+                style={{
+                  width: '60%',
+                  textAlign: 'center',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  marginTop: '35%',
+                }}
+              >
+                Aun no Tienes Pedidos
+              </Text>
+              <Text
+                style={{
+                  width: '60%',
+                  textAlign: 'center',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                }}
+              >
+                ¡Pide Tu Primer Producto!
+              </Text>
+              <Button
+                style={{ width: '30%', marginRight: 'auto', marginLeft: 'auto', marginTop: 15 }}
+                onPress={() => navigate('Send')}
+              >
+                Pedir
+              </Button>
+            </>
+          )}
           {services ? (
             <List
               data={services}
@@ -198,7 +227,7 @@ const Done = () => {
                           }}
                         >
                           <Text style={{ fontWeight: 'bold' }}>
-                            {moment(item.dateCreated.seconds * 1000)
+                            {moment(item.arrivalDate.seconds * 1000)
                               .locale('es')
                               .format('ddd, D MMM')}{' '}
                           </Text>
@@ -214,7 +243,7 @@ const Done = () => {
                         <Text>
                           Paquetes : {item.products ? item.products.length : item.quantity}
                         </Text>
-                        <Text>Ref : {item.id.substring(0, 5)}</Text>
+                        <Text>Ref : {item.id?.substring(0, 5)}</Text>
                         <Text>Total : ${item.total.total}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
@@ -306,7 +335,7 @@ const Done = () => {
                           }}
                         >
                           <Text style={{ fontWeight: 'bold' }}>
-                            {moment(item.dateCreated.seconds * 1000)
+                            {moment(item.date.seconds * 1000)
                               .locale('es')
                               .format('ddd, D MMM')}{' '}
                           </Text>
@@ -322,15 +351,15 @@ const Done = () => {
                         <Text>
                           Paquetes : {item.products ? item.products.length : item.quantity}
                         </Text>
-                        <Text>Ref : {item.id.substring(0, 5)}</Text>
+                        <Text>Ref : {item.id?.substring(0, 5)}</Text>
                         <Text>Total : ${item.total.total}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
                             style={{
                               color: 'black',
-                              fontWeight: '900',
-                              margin: 10,
-                              width: 140,
+                              fontWeight: '700',
+
+                              width: 160,
                               alignSelf: 'center',
                               textAlign: 'center',
                             }}
@@ -345,7 +374,6 @@ const Done = () => {
                               height: 50,
                               marginLeft: 'auto',
                               marginRight: 'auto',
-                              marginTop: 20,
                               borderRadius: 50,
                               backgroundColor: '#FFD700',
                               borderColor: 'black',
@@ -391,6 +419,37 @@ const Done = () => {
         </>
       ) : (
         <>
+          {servicesEntrega.length === 0 && !loading && (
+            <>
+              <Text
+                style={{
+                  width: '60%',
+                  textAlign: 'center',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  marginTop: '35%',
+                }}
+              >
+                Aun no Tienes Viajes
+              </Text>
+              <Text
+                style={{
+                  width: '60%',
+                  textAlign: 'center',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                }}
+              >
+                ¡Haz Tu Primer Viaje!
+              </Text>
+              <Button
+                style={{ width: '30%', marginRight: 'auto', marginLeft: 'auto', marginTop: 15 }}
+                onPress={() => navigate('Deliver')}
+              >
+                Viajar
+              </Button>
+            </>
+          )}
           {servicesEntrega ? (
             <List
               data={servicesEntrega}
@@ -482,7 +541,7 @@ const Done = () => {
                       </View>
                       <View style={{ marginLeft: 10, marginTop: 5 }}>
                         <Text style={{ fontWeight: 'bold' }}>
-                          {moment(item.dateCreated.seconds * 1000)
+                          {moment(item.arrivalDate.seconds * 1000)
                             .locale('es')
                             .format('ddd, D MMM')}{' '}
                         </Text>
@@ -490,7 +549,7 @@ const Done = () => {
                         <Text>
                           Paquetes: {item.products ? item.products.length : item.quantity}
                         </Text>
-                        <Text>Ref : {item.id.substring(0, 5)}</Text>
+                        <Text>Ref : {item.id?.substring(0, 5)}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
                             style={{
@@ -527,7 +586,6 @@ const Done = () => {
                               height: 50,
                               marginLeft: 'auto',
                               marginRight: 'auto',
-                              marginTop: 20,
                               borderRadius: 50,
                               backgroundColor: 'transparent',
                               borderColor: '#FFD700',
@@ -569,7 +627,7 @@ const Done = () => {
                       </View>
                       <View style={{ marginRight: 20, marginTop: 5 }}>
                         <Text style={{ fontWeight: 'bold' }}>
-                          {moment(item.dateCreated.seconds * 1000)
+                          {moment(item.date.seconds * 1000)
                             .locale('es')
                             .format('ddd, D MMM')}{' '}
                         </Text>
@@ -577,7 +635,7 @@ const Done = () => {
                         <Text>
                           Paquetes : {item.products ? item.products.length : item.quantity}
                         </Text>
-                        <Text>Ref : {item.id.substring(0, 5)}</Text>
+                        <Text>Ref : {item.id?.substring(0, 5)}</Text>
                         {item.status === 'Buscando Chofer' ? (
                           <Text
                             style={{

@@ -4,7 +4,7 @@ import firebase from 'firebase';
 import { Rating } from 'react-native-ratings';
 import { useAuth } from '@providers/auth';
 import { StatusBar } from 'expo-status-bar';
-import { TouchableOpacity, Alert } from 'react-native';
+import { TouchableOpacity, Alert, ScrollView, Linking, Platform } from 'react-native';
 import { Avatar, Text, Divider, Icon, Button, Card, Modal, useTheme } from '@ui-kitten/components';
 import { Container, Content, Row, OptionText, AvatarSection, TextSection, Input } from './elements';
 
@@ -18,6 +18,18 @@ const Options = () => {
 
   const { user } = useAuth();
 
+  const call = async (info) => {
+    let number = info;
+
+    if (Platform.OS !== 'android') number = `telprompt:${number}`;
+    else number = `tel:${number}`;
+
+    const supported = await Linking.canOpenURL(number);
+
+    if (!supported) Alert.alert('Phone number is not available');
+    else await Linking.openURL(number);
+  };
+
   const submitPhone = async () => {
     const db = firebase.firestore();
     db.collection('Users')
@@ -27,7 +39,7 @@ const Options = () => {
       })
       .then(() => {
         setChangingPhone(false);
-        Alert.alert('Cambio de Telefono', 'Cambiaste tu telefono con exito');
+        Alert.alert('Cambio de teléfono', 'Cambiaste tu teléfono con éxito');
       });
   };
 
@@ -70,90 +82,140 @@ const Options = () => {
             </Text>
           </TextSection>
         </AvatarSection>
-        <Rating
-          type="star"
-          ratingCount={5}
-          startingValue={user.rating ? user.rating : 5}
-          imageSize={50}
-          showRating
-          readonly
-        />
-        <Card
-          style={{
-            marginTop: 15,
-            marginRight: 'auto',
-            marginLeft: 'auto',
-            width: '80%',
-          }}
-          status="primary"
-        >
-          <Row style={{ justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 32, fontWeight: '800' }}>${user.credit.toFixed(2)}</Text>
-            <Button disabled={user.retirando || withdraw} onPress={() => retirar()}>
-              Retirar
-            </Button>
-          </Row>
-        </Card>
-        {!changingPhone && (
-          <>
-            <Button
-              style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
-              status="primary"
-              appearance="outline"
-              onPress={() => setChangingPhone(true)}
-            >
-              Cambiar Telefono
-            </Button>
-            <Button
-              style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
-              status="primary"
-              appearance="outline"
-              // eslint-disable-next-line no-console
-              onPress={() => console.log('telefono')}
-            >
-              Soporte
-            </Button>
-          </>
-        )}
-        {changingPhone && (
-          <>
-            <Input
-              size="large"
-              autoCapitalize="none"
-              value={phone}
-              style={{ marginTop: 30 }}
-              label="Nuevo Telefono"
-              keyboardType="numeric"
-              placeholder="Telefono"
-              accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
-              onChangeText={(nextValue) => setPhone(nextValue)}
-            />
-            <Button
-              style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
-              status="primary"
-              appearance="ghost"
-              onPress={() => submitPhone()}
-            >
-              Cambiar Telefono
-            </Button>
-          </>
-        )}
-
-        <Content>
-          <TouchableOpacity onPress={() => toggleExitModal(true)}>
-            <Row style={{ marginTop: 40 }}>
-              <OptionText>Cerrar Sesión</OptionText>
-              <Icon
-                height={32}
-                width={32}
-                fill={theme['color-danger-600']}
-                name="log-out-outline"
-              />
+        <ScrollView>
+          <Card>
+            <Text style={{ fontWeight: '800', fontSize: 13 }}>Crédito Passeio</Text>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Card
+                style={{
+                  maxWidth: '50%',
+                }}
+              >
+                <Text style={{ fontSize: 20, fontWeight: '800' }}>${user.credit.toFixed(2)}</Text>
+              </Card>
+              <Card
+                style={{
+                  maxWidth: '50%',
+                }}
+              >
+                <Rating
+                  type="star"
+                  ratingCount={5}
+                  startingValue={user.rating ? user.rating : 5}
+                  imageSize={30}
+                  readonly
+                />
+              </Card>
             </Row>
-          </TouchableOpacity>
-          <Divider />
-        </Content>
+            <Button disabled={user.retirando || withdraw} onPress={() => retirar()}>
+              Retirar Ganancias
+            </Button>
+          </Card>
+          {!changingPhone && (
+            <Card style={{ marginTop: 20, marginBottom: 20 }}>
+              <Text style={{ fontWeight: '800', fontSize: 13 }}> Acciones</Text>
+              <Button
+                style={{
+                  width: '100%',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                }}
+                status="primary"
+                appearance="ghost"
+                onPress={() => setChangingPhone(true)}
+              >
+                <Row style={{ justifyContent: 'space-between', width: '100%' }}>
+                  <Text style={{ fontWeight: '500' }}>Cambio de Teléfono</Text>
+                  <Icon height={32} width={32} fill={theme['color-primary-600']} name="phone" />
+                </Row>
+              </Button>
+              <Divider />
+              <Button
+                style={{
+                  width: '100%',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                }}
+                status="primary"
+                appearance="ghost"
+                onPress={() => call(7702961922)}
+              >
+                <Row style={{ justifyContent: 'space-between', width: '100%' }}>
+                  <Text style={{ fontWeight: '500' }}>Marcar a Soporte</Text>
+                  <Icon
+                    height={32}
+                    width={32}
+                    fill={theme['color-primary-600']}
+                    name="phone-call"
+                  />
+                </Row>
+              </Button>
+              <Divider />
+              <Button
+                style={{
+                  width: '100%',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                }}
+                status="primary"
+                appearance="ghost"
+                onPress={() => {
+                  Linking.openURL('https://www.passeioapp.com/terms?lang=en');
+                }}
+              >
+                <Row style={{ justifyContent: 'space-between', width: '100%' }}>
+                  <Text style={{ fontWeight: '500' }}>Terminos y Condiciones</Text>
+                  <Icon height={32} width={32} fill={theme['color-primary-600']} name="bookmark" />
+                </Row>
+              </Button>
+            </Card>
+          )}
+          {changingPhone && (
+            <>
+              <Input
+                size="large"
+                autoCapitalize="none"
+                value={phone}
+                style={{ marginTop: 30 }}
+                label="Nuevo Telefono"
+                keyboardType="numeric"
+                placeholder="Telefono"
+                accessoryLeft={(props) => <Icon {...props} name="pricetags-outline" />}
+                onChangeText={(nextValue) => setPhone(nextValue)}
+              />
+              <Button
+                style={{ marginTop: 20, width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
+                onPress={() => submitPhone()}
+              >
+                Cambiar Telefono
+              </Button>
+              <Button
+                style={{ width: '80%', marginLeft: 'auto', marginRight: 'auto' }}
+                appearance="ghost"
+                onPress={() => setChangingPhone(false)}
+              >
+                <Text style={{ color: 'red' }}>Cancelar</Text>
+              </Button>
+            </>
+          )}
+
+          <Content>
+            <TouchableOpacity onPress={() => toggleExitModal(true)}>
+              <Row style={{ marginTop: 10 }}>
+                <OptionText>Cerrar Sesión</OptionText>
+                <Icon
+                  height={32}
+                  width={32}
+                  fill={theme['color-danger-600']}
+                  name="log-out-outline"
+                />
+              </Row>
+            </TouchableOpacity>
+            <Divider />
+          </Content>
+        </ScrollView>
       </Container>
+
       <Modal visible={exitModal}>
         <Card disabled>
           <Text>¿Estás seguro que deseas salir?</Text>
